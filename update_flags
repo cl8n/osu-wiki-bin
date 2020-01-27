@@ -1,0 +1,50 @@
+#!/usr/bin/env node
+
+const { readFileSync, writeFileSync } = require('fs');
+const { join } = require('path');
+
+function removeFlagRefs(content) {
+    return content
+        .replace(/^\[flag_(?:[A-Z]+|__)\]: \/wiki\/shared\/flag\/.+/gm, '')
+        .replace(/[\n\r]+$/, '\n');
+}
+
+function addFlagRefs(content, flagNames) {
+    const flags = [...content.matchAll(/!\[\]\[flag_([A-Z]+|__)\]/g)]
+        .reduce((flags, current) => {
+            if (flags.find(flag => flag === current[1]) === undefined)
+                flags.push(current[1]);
+
+            return flags;
+        }, [])
+        .sort();
+
+    console.log(`Adding references for ${flags.join(', ')}`);
+
+    content += '\n';
+    for (const flag of flags) {
+        content += `[flag_${flag}]: /wiki/shared/flag/${flag}.gif`;
+        if (flagNames[flag] !== undefined)
+            content += ` "${flagNames[flag]}"`;
+        content += '\n';
+    }
+
+    return content;
+}
+
+const LOCALE = 'en.md';
+const articlePath = join(__dirname, '../wiki', process.argv[2], LOCALE);
+const flagNamesPath = join(__dirname, '../meta/flag-references', LOCALE);
+
+const flagNames = [...readFileSync(flagNamesPath, 'utf8').matchAll(/\[flag_([A-Z]+|__)\]: \/wiki\/shared\/flag\/\1\.gif(?: "(.+)")?/g)]
+    .reduce((flagNames, current) => {
+        flagNames[current[1]] = current[2];
+
+        return flagNames;
+    }, {});
+
+let content = readFileSync(articlePath, 'utf8');
+content = removeFlagRefs(content);
+content = addFlagRefs(content, flagNames);
+
+writeFileSync(articlePath, content);

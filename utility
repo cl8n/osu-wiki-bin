@@ -1,0 +1,113 @@
+#!/usr/bin/env node
+
+const fs = require('fs');
+const join = require('path').join;
+const { beatmapLink, config, groupMap, groupMembers, loadGroup, userLink } = require('./include');
+
+async function replace() {
+    const userSearch = /u#(\d+)|u!(.+?)!u/g;
+    const beatmapSearch = /b#(\d+)/g;
+    let file = fs.readFileSync(join(__dirname, config.file), 'utf8');
+    let byName, link, match;
+
+    while ((match = userSearch.exec(file)) !== null) {
+        byName = match[1] === undefined;
+        link = await userLink(byName ? match[2] : match[1], { byName });
+
+        file = file.replace(match[0], link);
+    }
+
+    while ((match = beatmapSearch.exec(file)) !== null) {
+        link = await beatmapLink(match[1]);
+
+        file = file.replace(match[0], link);
+    }
+
+    fs.writeFileSync(join(__dirname, config.file), file);
+}
+
+async function checkGroup(group) {
+    const file = loadGroup(group);
+
+    const userIdsOnline = [];
+    for (const groupId of groupMap[group]) {
+        const members = await groupMembers(groupId);
+        userIdsOnline.push(...members);
+    }
+
+    const userIdsLocal = [];
+    const userSearch = /osu.ppy.sh\/users\/(\d+)/g;
+    let match;
+    while ((match = userSearch.exec(file)) !== null)
+        userIdsLocal.push(match[1]);
+
+    const missingFromLocal = userIdsOnline.filter(x => !userIdsLocal.includes(x));
+    const missingFromOnline = userIdsLocal.filter(x => !userIdsOnline.includes(x));
+
+    console.log('Users missing from file:');
+    for (const u of missingFromLocal) {
+        const user = await userLink(u, { flag: false, returnObj: true });
+        console.log(`    #${user.user_id.toString().padEnd(8)} ${user.username}`);
+    }
+    console.log('Users in file that are not in group:');
+    for (const u of missingFromOnline) {
+        const user = await userLink(u, { flag: false, returnObj: true });
+        console.log(`    #${user.user_id.toString().padEnd(8)} ${user.username}`);
+    }
+}
+
+function ulToOl(path, line) {
+    const file = fs.readFileSync(path, 'utf8');
+    const lines = file.split('\n');
+
+    for (let i = line - 1; lines[i].startsWith('- '); ++i)
+        lines[i] = lines[i].replace(/^- /, (i - line + 2) + '. ');
+
+    fs.writeFileSync(path, lines.join('\n'));
+}
+
+function sortUserLists(path) {
+    const file = fs.readFileSync(path, 'utf8');
+    let lines = file.split('\n');
+
+    let currentList = [];
+    let currentListStart = null;
+    for (let i = 0; i < lines.length; ++i) {
+        const match = lines[i].match(/^[-|] !\[\]\[flag_..\] \[(.+?)\]\(https.+$/);
+        if (match !== null) {
+            if (currentListStart === null)
+                currentListStart = i;
+
+            currentList.push([match[1], match[0]]);
+        } else if (currentListStart !== null) {
+            lines = lines.slice(0, currentListStart)
+                .concat(currentList
+                    .sort((a, b) => a[0].localeCompare(b[0]))
+                    .map(l => l[1]))
+                .concat(lines.slice(i));
+
+            currentList = [];
+            currentListStart = null;
+        }
+    }
+
+    fs.writeFileSync(path, lines.join('\n'));
+}
+
+switch (process.argv[2]) {
+    default:
+        console.log('Usage:\n    --replace\n    --check-group <group>\n    --ul-to-ol <file> <line>\n    --sort-user-lists <file>');
+        break;
+    case '--replace':
+        replace();
+        break;
+    case '--check-group':
+        checkGroup(process.argv[3]);
+        break;
+    case '--ul-to-ol':
+        ulToOl(process.argv[3], process.argv[4]);
+        break;
+    case '--sort-user-lists':
+        sortUserLists(process.argv[3]);
+        break;
+}
