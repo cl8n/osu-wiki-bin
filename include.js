@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { readdir } = require('fs').promises;
 const https = require('https');
 const { safeLoad: yaml } = require('js-yaml');
 const { join } = require('path');
@@ -140,9 +141,20 @@ function loadGroup(group, locale = 'en') {
     return fs.readFileSync(path, 'utf8');
 }
 
+async function getFiles(dir) {
+    const dirents = await readdir(dir, { withFileTypes: true });
+    const files = await Promise.all(dirents.map(dirent => {
+        const res = join(dir, dirent.name);
+        return dirent.isDirectory() ? getFiles(res) : res;
+    }));
+
+    return files.flat();
+}
+
 module.exports = {
     beatmapLink,
     config,
+    getFiles,
     groupMap,
     groupMembers,
     groupTranslation,

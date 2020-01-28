@@ -1,16 +1,12 @@
 #!/usr/bin/env node
 
 const fs = require('fs');
-const join = require('path').join
+const { join } = require('path');
 const wikiDir = join(__dirname, '..', 'wiki');
 
-for (const article in Object.entries(articleInfo()).sort(sortArticles)) {
-
-}
-
 function sortArticles(article1, article2) {
-    return (article1[0].match(/\//g) || []).length
-         - (article2[0].match(/\//g) || []).length;
+    return (article2[0].match(/\//g) || []).length
+         - (article1[0].match(/\//g) || []).length;
 }
 
 function articleInfo() {
@@ -402,4 +398,20 @@ function articleInfo() {
         Visual_Settings: ['Visual settings'],
         Welcome: ['Welcome']
     };
+}
+
+// Loop through all of the articles, starting with the deepest in the file tree
+for (const article of Object.entries(articleInfo()).sort(sortArticles)) {
+    const oldFullPath = join(wikiDir, article[0]);
+    const newTitle = article[1][0];
+    const newBasePath = article[1][1];
+    const newFullPath = join(oldFullPath, '..', newBasePath);
+
+    // Fix title in English article
+    const articleContent = fs.readFileSync(join(oldFullPath, 'en.md'), 'utf8');
+    const articleContentNewTitle = articleContent.replace(/^# .+?$/m, `# ${newTitle}`);
+    //fs.writeFileSync(join(oldFullPath, 'en.md'));
+
+    // Rename folder
+    //fs.renameSync(oldFullPath, newFullPath);
 }

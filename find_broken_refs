@@ -1,0 +1,43 @@
+#!/usr/bin/env node
+
+const { readFile, stat } = require('fs').promises;
+const { dirname, join, relative } = require('path');
+const { getFiles } = require('./include');
+
+const broken = new Set();
+let trailingSlashCount = 0;
+
+(async () => {
+    for (const path of await getFiles(join(__dirname, '..'))) {
+        if (!path.endsWith('.md'))
+            continue;
+
+        const file = await readFile(path, 'utf8');
+
+        for (const match of file.matchAll(/\[.*?\]\((.+?)(?:#.+?)?(?: ".+?")?\)|^\[.*?\]: (.+?)(?:#.+?)?(?: ".+?")?$/gm)) {
+            let ref = match[1] || match[2];
+
+            if (ref.match(/^https?:\/\/|^mailto:/) !== null)
+                continue;
+
+            ref = ref.startsWith('/')
+                ? join(__dirname, '..', ref)
+                : join(dirname(path), ref);
+
+            try {
+                await stat(ref);
+            } catch (e) {
+                broken.add(relative(join(__dirname, '..'), e.path));
+            }
+
+            if (ref.endsWith('/'))
+                ++trailingSlashCount;
+        }
+    }
+
+    for (const ref of broken)
+        console.error(ref);
+
+    console.log(`There are ${broken.size} unique broken references.`);
+    console.log(`${trailingSlashCount} references have a trailing slash.`);
+})();
