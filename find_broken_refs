@@ -6,34 +6,39 @@ const { getFiles } = require('./include');
 
 const broken = new Set();
 let trailingSlashCount = 0;
+const subDirectories = process.argv.slice(2);
+
+if (subDirectories.length === 0)
+    subDirectories.push('');
 
 (async () => {
-    for (const path of await getFiles(join(__dirname, '..'))) {
-        if (!path.endsWith('.md'))
-            continue;
-
-        const file = await readFile(path, 'utf8');
-
-        for (const match of file.matchAll(/\[.*?\]\((.+?)(?:#.+?)?(?: ".+?")?\)|^\[.*?\]: (.+?)(?:#.+?)?(?: ".+?")?$/gm)) {
-            let ref = match[1] || match[2];
-
-            if (ref.match(/^https?:\/\/|^mailto:/) !== null)
+    for (const subDirectory of subDirectories)
+        for (const path of await getFiles(join(__dirname, '..', subDirectory))) {
+            if (!path.endsWith('.md'))
                 continue;
 
-            ref = ref.startsWith('/')
-                ? join(__dirname, '..', ref)
-                : join(dirname(path), ref);
+            const file = await readFile(path, 'utf8');
 
-            try {
-                await stat(ref);
-            } catch (e) {
-                broken.add(relative(join(__dirname, '..'), e.path));
+            for (const match of file.matchAll(/\[.*?\]\((.+?)(?:#.+?)?(?: ".+?")?\)|^\[.*?\]: (.+?)(?:#.+?)?(?: ".+?")?$/gm)) {
+                let ref = match[1] || match[2];
+
+                if (ref.match(/^(?:https?:\/\/|mailto:|#)/) !== null)
+                    continue;
+
+                ref = ref.startsWith('/')
+                    ? join(__dirname, '..', ref)
+                    : join(dirname(path), ref);
+
+                try {
+                    await stat(ref);
+                } catch (e) {
+                    broken.add(relative(join(__dirname, '..'), e.path));
+                }
+
+                if (ref.endsWith('/'))
+                    ++trailingSlashCount;
             }
-
-            if (ref.endsWith('/'))
-                ++trailingSlashCount;
         }
-    }
 
     for (const ref of broken)
         console.error(ref);
