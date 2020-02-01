@@ -262,9 +262,6 @@ function articleInfo() {
 console.log('| Old path | New base path | New title |');
 console.log('| :-- | :-- | :-- |');
 
-// Track article titles that don't match their base path name
-const notMatching = [];
-
 // Loop through all of the articles, starting with the deepest in the file tree
 for (const article of Object.entries(articleInfo()).sort(sortArticles)) {
     const oldFullPath = join(wikiDir, article[0]);
@@ -286,17 +283,6 @@ for (const article of Object.entries(articleInfo()).sort(sortArticles)) {
     // Output table row
     console.log(`| ${article[0]} | ${newBasePath} | ${newTitle} |`);
 
-    // If the article title doesn't match the base path name, track it
-    if (newBasePath !== newTitle.replace(/ /g, '_'))
-        notMatching.push({ path: newBasePath, title: newTitle });
-
     // Rename folder
     fs.renameSync(oldFullPath, newFullPath);
 }
-
-// Output the not matching titles/paths
-console.log();
-console.log('| New base path | New title |');
-console.log('| :-- | :-- |');
-for (const pair of notMatching)
-    console.log(`| ${pair.path} | ${pair.title} |`);
