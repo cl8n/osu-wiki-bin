@@ -103,6 +103,29 @@ async function beatmapLink(beatmapId) {
     return `[${md(beatmap[0].artist)} - ${md(beatmap[0].title)} (${md(beatmap[0].creator)}) [${md(beatmap[0].version)}]](https://osu.ppy.sh/beatmapsets/${beatmap[0].beatmapset_id}#${modeString(beatmap[0].mode)}/${beatmap[0].beatmap_id})`;
 }
 
+async function beatmapsetLink(beatmapsetId) {
+    const nullBeatmap = {
+        artist: '<null>',
+        beatmap_id: 0,
+        beatmapset_id: 0,
+        creator: '<null>',
+        mode: 0,
+        title: '<null>',
+        version: '<null>'
+    };
+
+    const beatmap = await osuApi('get_beatmaps', {
+        s: beatmapsetId
+    });
+
+    if (beatmap.length === 0) {
+        console.error(`Beatmap not found: ${beatmapsetId}`);
+        beatmap.push(nullBeatmap);
+    }
+
+    return `[${md(beatmap[0].artist)} - ${md(beatmap[0].title)}](https://osu.ppy.sh/beatmapsets/${beatmap[0].beatmapset_id})`;
+}
+
 async function groupMembers(groupId) {
     const userSearch = /"id":(\d+),/g;
     const url = `https://osu.ppy.sh/groups/${groupId}?sort=username`;
@@ -153,6 +176,7 @@ async function getFiles(dir) {
 
 module.exports = {
     beatmapLink,
+    beatmapsetLink,
     config,
     getFiles,
     groupMap,

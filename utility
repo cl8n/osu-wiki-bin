@@ -2,11 +2,12 @@
 
 const fs = require('fs');
 const join = require('path').join;
-const { beatmapLink, config, groupMap, groupMembers, loadGroup, userLink } = require('./include');
+const { beatmapLink, beatmapsetLink, config, groupMap, groupMembers, loadGroup, userLink } = require('./include');
 
 async function replace() {
     const userSearch = /u#(\d+)|u!(.+?)!u/g;
     const beatmapSearch = /b#(\d+)/g;
+    const beatmapsetSearch = /s#(\d+)/g;
     let file = fs.readFileSync(join(__dirname, config.file), 'utf8');
     let byName, link, match;
 
@@ -19,6 +20,12 @@ async function replace() {
 
     while ((match = beatmapSearch.exec(file)) !== null) {
         link = await beatmapLink(match[1]);
+
+        file = file.replace(match[0], link);
+    }
+
+    while ((match = beatmapsetSearch.exec(file)) !== null) {
+        link = await beatmapsetLink(match[1]);
 
         file = file.replace(match[0], link);
     }
