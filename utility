@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 
 const fs = require('fs');
-const join = require('path').join;
 const { beatmapLink, beatmapsetLink, config, groupMap, groupMembers, loadGroup, userLink } = require('./include');
 
-async function replace() {
+async function replace(filename) {
     const userSearch = /u#(\d+)|u!(.+?)!u/g;
     const beatmapSearch = /b#(\d+)/g;
     const beatmapsetSearch = /s#(\d+)/g;
-    let file = fs.readFileSync(join(__dirname, config.file), 'utf8');
+    let file = fs.readFileSync(filename, 'utf8');
     let byName, link, match;
 
     while ((match = userSearch.exec(file)) !== null) {
@@ -30,7 +29,7 @@ async function replace() {
         file = file.replace(match[0], link);
     }
 
-    fs.writeFileSync(join(__dirname, config.file), file);
+    fs.writeFileSync(filename, file);
 }
 
 async function checkGroup(group) {
@@ -103,10 +102,10 @@ function sortUserLists(path) {
 
 switch (process.argv[2]) {
     default:
-        console.log('Usage:\n    --replace\n    --check-group <group>\n    --ul-to-ol <file> <line>\n    --sort-user-lists <file>');
+        console.log('Usage:\n    --replace <file>\n    --check-group <group>\n    --ul-to-ol <file> <line>\n    --sort-user-lists <file>');
         break;
     case '--replace':
-        replace();
+        replace(process.argv[3]);
         break;
     case '--check-group':
         checkGroup(process.argv[3]);
