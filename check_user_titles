@@ -1,0 +1,19 @@
+#!/usr/bin/env node
+
+const { readFile } = require('fs').promises;
+const { join } = require('path');
+const { scrapeUser } = require('./include');
+
+const file = join(__dirname, '../wiki/People/Users_with_unique_titles/en.md');
+
+(async () => {
+    const content = (await readFile(file, 'utf8'))
+        .split('## By name')[1];
+
+    for (const match of content.matchAll(/users\/(?<id>\d+)\) \| (?<title>.+?) \|$/gm)) {
+        const user = await scrapeUser(match.groups.id);
+
+        if (user.title !== match.groups.title)
+            console.log(user.username);
+    }
+})();

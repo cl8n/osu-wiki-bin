@@ -145,6 +145,20 @@ async function groupMembers(groupId) {
     return userIds;
 }
 
+async function scrapeUser(userId) {
+    const url = `https://osu.ppy.sh/users/${userId}`;
+    const data = await new Promise((resolve, reject) => {
+        https.get(url, res => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => resolve(data));
+        }).on('error', err => reject(err.message));
+    });
+
+    const json = data.match(/<script id="json-user" type="application\/json">\s*({.+?})\s*<\/script>/)[1];
+    return JSON.parse(json);
+}
+
 function groupTranslation(locale) {
     const contents = fs.readFileSync(join(__dirname, `../meta/group-info/${locale}.yaml`), 'utf8');
     return yaml(contents);
@@ -185,5 +199,6 @@ module.exports = {
     loadGroup,
     md,
     modeString,
+    scrapeUser,
     userLink
 };
