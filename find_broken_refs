@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const { readFile, stat } = require('fs').promises;
-const { dirname, join, relative } = require('path');
+const { dirname, join } = require('path');
 const { getFiles } = require('./include');
 
 const firstArg = process.argv[2];
@@ -31,14 +31,14 @@ let trailingSlashCount = 0;
                 if (ref.match(/^(?:https?:\/\/|mailto:|#)/) !== null)
                     continue;
 
-                ref = ref.startsWith('/')
+                const realRef = ref.startsWith('/')
                     ? join(__dirname, '..', ref)
                     : join(dirname(path), ref);
 
                 try {
-                    await stat(ref);
+                    await stat(realRef);
                 } catch (e) {
-                    broken.add(relative(join(__dirname, '..'), e.path));
+                    broken.add(ref);
                 }
 
                 if (ref.endsWith('/'))
