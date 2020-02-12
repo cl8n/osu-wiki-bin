@@ -188,6 +188,15 @@ async function getFiles(dir) {
     return files.flat();
 }
 
+function replaceLineEndings(content, ending) {
+    const originalEndingMatch = content.match(/\r\n|\r|\n/);
+    const originalEnding = originalEndingMatch === null ? null : originalEndingMatch[0];
+
+    content = content.replace(/\r\n|\r|\n/g, ending);
+
+    return { content, originalEnding };
+}
+
 module.exports = {
     beatmapLink,
     beatmapsetLink,
@@ -199,6 +208,7 @@ module.exports = {
     loadGroup,
     md,
     modeString,
+    replaceLineEndings,
     scrapeUser,
     userLink
 };
