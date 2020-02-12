@@ -2,49 +2,53 @@
 
 const { readFileSync, writeFileSync } = require('fs');
 const { join } = require('path');
+const { replaceLineEndings } = require('./include');
 
-function removeFlagRefs(content) {
-    return content
-        .replace(/^\[flag_(?:[A-Z]+|__)\]: \/wiki\/shared\/flag\/.+/gm, '')
-        .replace(/[\n\r]+$/, '\n');
-}
+function fixFlagRefs(content, flagNames) {
+    const normalizedEndings = replaceLineEndings(content, '\n');
 
-function addFlagRefs(content, flagNames) {
-    const flags = [...content.matchAll(/!\[\]\[flag_([A-Z]+|__)\]/g)]
-        .reduce((flags, current) => {
-            if (flags.find(flag => flag === current[1]) === undefined)
-                flags.push(current[1]);
+    content = normalizedEndings.content
+        .replace(/\n*$/, '\n')
+        .replace(/^\[flag_[A-Z_]+\]: \/wiki\/shared\/flag\/.+\n/gm, '')
+        .replace(/\n*$/, '\n\n');
 
-            return flags;
-        }, [])
-        .sort();
+    const flags = new Set();
 
-    console.log(`Adding references for ${flags.join(', ')}`);
+    for (const flagMatch of content.matchAll(/!\[[A-Z_]*\]\[flag_([A-Z_]+)\]/g))
+        flags.add(flagMatch[1]);
 
-    content += '\n';
-    for (const flag of flags) {
+    for (const flag of [...flags].sort()) {
         content += `[flag_${flag}]: /wiki/shared/flag/${flag}.gif`;
+
         if (flagNames[flag] !== undefined)
             content += ` "${flagNames[flag]}"`;
+
         content += '\n';
     }
 
-    return content;
+    return replaceLineEndings(content, normalizedEndings.originalEnding).content;
 }
 
-const LOCALE = 'en.md';
-const articlePath = join(__dirname, '../wiki', process.argv[2], LOCALE);
-const flagNamesPath = join(__dirname, '../meta/flag-references', LOCALE);
+const flagNamesByLocale = {};
 
-const flagNames = [...readFileSync(flagNamesPath, 'utf8').matchAll(/\[flag_([A-Z]+|__)\]: \/wiki\/shared\/flag\/\1\.gif(?: "(.+)")?/g)]
-    .reduce((flagNames, current) => {
-        flagNames[current[1]] = current[2];
+for (const file of process.argv.slice(2)) {
+    const localeMatch = file.match(/[a-z-]+\.md$/);
+    const locale = localeMatch === null ? 'en.md' : localeMatch[0];
+    let flagNames = flagNamesByLocale[locale];
 
-        return flagNames;
-    }, {});
+    if (flagNames === undefined) {
+        flagNames = {};
 
-let content = readFileSync(articlePath, 'utf8');
-content = removeFlagRefs(content);
-content = addFlagRefs(content, flagNames);
+        try {
+            const flagNamesFile = join(__dirname, '../meta/flag-references', locale);
+            const flagNamesMd = readFileSync(flagNamesFile, 'utf8');
 
-writeFileSync(articlePath, content);
+            for (const flagMatch of flagNamesMd.matchAll(/\[flag_([A-Z_]+)\].+\1\.gif "(.+)"/g))
+                flagNames[flagMatch[1]] = flagMatch[2];
+        } catch {}
+
+        flagNamesByLocale[locale] = flagNames;
+    }
+
+    writeFileSync(file, fixFlagRefs(readFileSync(file, 'utf8'), flagNames));
+}
