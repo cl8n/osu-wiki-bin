@@ -1,0 +1,74 @@
+#!/usr/bin/env node
+
+function getOptions(command, args) {
+    const options = {};
+    const trySetOption = (arg, canShift) => {
+        const option = getOption(command.options, arg);
+
+        if (option === null) {
+            console.error(`Invalid option "${arg}". Type "format ${command.name} --help" for help.`);
+            process.exit(1);
+        }
+
+        const value = option.type === 'boolean' || canShift && args.shift();
+
+        if (!value) {
+            console.error(`Option "${arg}" requires a value. Type "format ${command.name} --help" for help.`);
+            process.exit(1);
+        }
+
+        options[option.name] = value;
+    }
+
+    while (args.length > 0 && args[0].startsWith('-')) {
+        const arg0 = args.shift();
+
+        if (arg0 === '-' || arg0 === '--')
+            break;
+
+        if (arg0[1] === '-')
+            trySetOption(arg0, true);
+        else {
+            for (let i = 1; i < arg0.length - 1; ++i)
+                trySetOption(`-${arg0[i]}`, false);
+
+            trySetOption(`-${arg0[arg0.length - 1]}`, true);
+        }
+    }
+
+    if (args.length > 0)
+        Object.assign(options, args);
+
+    return options;
+}
+
+function getOption(options, arg) {
+    arg = arg.replace(/^-+|=.+$/g, '');
+    const type = options[arg];
+
+    if (type === undefined)
+        return null;
+
+    if (type.startsWith('='))
+        return getOption(options, type.substring(1));
+
+    return { name: arg, type };
+}
+
+const commandName = process.argv[2] || 'help';
+let command;
+
+try {
+    command = require(`./format-${commandName}`);
+}
+catch (error) {
+    if (error.code !== 'MODULE_NOT_FOUND')
+        throw error;
+
+    console.error(`Invalid command "${commandName}". Type "format help" for help.`);
+    process.exit(1);
+}
+
+command.options.h = '=help';
+command.options.help = 'boolean';
+command.run(getOptions(command, process.argv.slice(3)));
