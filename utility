@@ -1,36 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require('fs');
-const { beatmapLink, beatmapsetLink, config, groupMap, groupMembers, loadGroup, userLink } = require('./include');
-
-async function replace(filename) {
-    const userSearch = /u#(\d+)|u!(.+?)!u/g;
-    const beatmapSearch = /b#(\d+)/g;
-    const beatmapsetSearch = /s#(\d+)/g;
-    let file = fs.readFileSync(filename, 'utf8');
-    let byName, link, match;
-
-    while ((match = userSearch.exec(file)) !== null) {
-        byName = match[1] === undefined;
-        link = await userLink(byName ? match[2] : match[1], { byName });
-
-        file = file.replace(match[0], link);
-    }
-
-    while ((match = beatmapSearch.exec(file)) !== null) {
-        link = await beatmapLink(match[1]);
-
-        file = file.replace(match[0], link);
-    }
-
-    while ((match = beatmapsetSearch.exec(file)) !== null) {
-        link = await beatmapsetLink(match[1]);
-
-        file = file.replace(match[0], link);
-    }
-
-    fs.writeFileSync(filename, file);
-}
+const { groupMap, groupMembers, loadGroup, userLink } = require('./include');
 
 async function checkGroup(group) {
     const file = loadGroup(group);
@@ -102,10 +73,7 @@ function sortUserLists(path) {
 
 switch (process.argv[2]) {
     default:
-        console.log('Usage:\n    --replace <file>\n    --check-group <group>\n    --ul-to-ol <file> <line>\n    --sort-user-lists <file>');
-        break;
-    case '--replace':
-        replace(process.argv[3]);
+        console.log('Usage:\n    --check-group <group>\n    --ul-to-ol <file> <line>\n    --sort-user-lists <file>');
         break;
     case '--check-group':
         checkGroup(process.argv[3]);
