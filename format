@@ -36,9 +36,7 @@ function getOptions(command, args) {
         }
     }
 
-    if (args.length > 0)
-        Object.assign(options, args);
-
+    options._ = args;
     return options;
 }
 
