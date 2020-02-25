@@ -14,37 +14,42 @@ if (subDirectories.length === 0)
 const broken = new Set();
 let trailingSlashCount = 0;
 
-(async () => {
-    for (const subDirectory of subDirectories)
-        for (const path of await getFiles(join(__dirname, '..', subDirectory))) {
-            if (!path.endsWith('.md'))
-                continue;
+async function findBrokenRefs(path) {
+    const file = await readFile(path, 'utf8');
 
-            const file = await readFile(path, 'utf8');
+    if (excludeOutdated && path.endsWith('.md') && !path.endsWith('en.md') && file.match(/^outdated: true$/m) !== null)
+        return;
 
-            if (excludeOutdated && !path.endsWith('en.md') && file.match(/^outdated: true$/m) !== null)
-                continue;
+    for (const match of file.matchAll(/\[.*?\]\((.+?)(?:#.+?)?(?: ".+?")?\)|^\[.*?\]: (.+?)(?:#.+?)?(?: ".+?")?$/gm)) {
+        let ref = match[1] || match[2];
 
-            for (const match of file.matchAll(/\[.*?\]\((.+?)(?:#.+?)?(?: ".+?")?\)|^\[.*?\]: (.+?)(?:#.+?)?(?: ".+?")?$/gm)) {
-                let ref = match[1] || match[2];
+        if (ref.match(/^(?:https?:\/\/|mailto:|#)/) !== null)
+            continue;
 
-                if (ref.match(/^(?:https?:\/\/|mailto:|#)/) !== null)
-                    continue;
+        const realRef = ref.startsWith('/')
+            ? join(__dirname, '..', ref)
+            : join(dirname(path), ref);
 
-                const realRef = ref.startsWith('/')
-                    ? join(__dirname, '..', ref)
-                    : join(dirname(path), ref);
-
-                try {
-                    await stat(realRef);
-                } catch (e) {
-                    broken.add(ref);
-                }
-
-                if (ref.endsWith('/'))
-                    ++trailingSlashCount;
-            }
+        try {
+            await stat(realRef);
+        } catch (e) {
+            broken.add(ref);
         }
+
+        if (ref.endsWith('/'))
+            ++trailingSlashCount;
+    }
+}
+
+(async () => {
+    for (const subDirectory of subDirectories) {
+        if (subDirectory.endsWith('.md'))
+            await findBrokenRefs(subDirectory);
+        else
+            for (const path of await getFiles(join(__dirname, '..', subDirectory)))
+                if (path.endsWith('.md'))
+                    await findBrokenRefs(path);
+    }
 
     for (const ref of broken)
         console.error(ref);
