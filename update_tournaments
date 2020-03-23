@@ -1,0 +1,82 @@
+#!/usr/bin/env node
+
+const { readdirSync, readFileSync, writeFileSync } = require('fs');
+const { safeLoad: yaml } = require('js-yaml');
+const { join } = require('path');
+
+function nestedProperty(object, property) {
+    const propQueue = property.split('.');
+    let current = object;
+
+    while (propQueue.length !== 0)
+        current = current[propQueue.shift()];
+
+    return current;
+}
+
+function reEscape(text) {
+    return text.replace(/[[\\^$.|?*+()]/g, '\\$&');
+}
+
+function translateTournament(originalContent, originalInfo, translatedInfo) {
+    const re = (pattern, flags = '') =>
+        new RegExp(
+            pattern.replace(
+                /\{([a-z_.]+?)\}/g,
+                (_, prop) => reEscape(nestedProperty(originalInfo, prop))
+            ),
+            flags
+        );
+
+    return originalContent
+        .replace(re('(?<=^# ){title}'), translatedInfo.title)
+        .replace(re('^{info}$', 'm'), translatedInfo.info)
+        .replace(re('(?<=## ){wc.title}'), translatedInfo.wc.title)
+        .replace(re('^{wc.info}$', 'm'), translatedInfo.wc.info)
+        .replace(re('{wc.owc}$', 'm'), translatedInfo.wc.owc)
+        .replace(re('{wc.twc}$', 'm'), translatedInfo.wc.twc)
+        .replace(re('{wc.cwc}$', 'm'), translatedInfo.wc.cwc)
+        .replace(re('{wc.mwc}$', 'm'), translatedInfo.wc.mwc)
+        .replace(re('(?<=## ){community.title}'), translatedInfo.community.title)
+        .replace(re('^{community.info}$', 'm'), translatedInfo.community.info)
+        .replace(re('(?<=!\\[){crowns.gold}(?=\\]\\[)', 'g'), translatedInfo.crowns.gold)
+        .replace(re('(?<=!\\[){crowns.silver}(?=\\]\\[)', 'g'), translatedInfo.crowns.silver)
+        .replace(re('(?<=!\\[){crowns.bronze}(?=\\]\\[)', 'g'), translatedInfo.crowns.bronze)
+        .replace(re('(?<= "){crowns.first}(?=")'), translatedInfo.crowns.first)
+        .replace(re('(?<= "){crowns.second}(?=")'), translatedInfo.crowns.second)
+        .replace(re('(?<= "){crowns.third}(?=")'), translatedInfo.crowns.third)
+        .replace(re('(?<=\| ){table.name}(?= \|)', 'g'), translatedInfo.table.name)
+        .replace(re('(?<=\| ){table.start}(?= \|)', 'g'), translatedInfo.table.start)
+        .replace(re('(?<=\| ){table.end}(?= \|)', 'g'), translatedInfo.table.end)
+        .replace(re('(?<=\| ){table.date}(?= \|)', 'g'), translatedInfo.table.date)
+        .replace(re('(?<=## ){see_also.title}'), translatedInfo.see_also.title)
+        .replace(re('(?<=\\[){see_also.country_list}(?=\\])'), translatedInfo.see_also.country_list)
+        .replace(re('{see_also.client_note}$', 'm'), translatedInfo.see_also.client_note);
+
+    // TODO: translate country names
+}
+
+const metaPath = join(__dirname, `../meta/tournament-index`);
+const tournamentPath = join(__dirname, '../wiki/Tournaments');
+const englishContent = readFileSync(join(tournamentPath, 'en.md'), 'utf8');
+const englishTranslationInfo = yaml(readFileSync(join(metaPath, 'en.yaml'), 'utf8'));
+
+for (const filename of readdirSync(metaPath)) {
+    if (filename === 'en.yaml')
+        continue;
+
+    const filenameMatch = filename.match(/^([a-z-]+)\.yaml$/);
+
+    if (filenameMatch === null) {
+        console.error(`Invalid translation file ${filename}`);
+        continue;
+    }
+
+    const translatedContent = translateTournament(
+        englishContent,
+        englishTranslationInfo,
+        yaml(readFileSync(join(metaPath, filename), 'utf8'))
+    );
+
+    writeFileSync(join(tournamentPath, `${filenameMatch[1]}.md`), translatedContent);
+}
