@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { readdir } = require('fs').promises;
+const { readdir, stat } = require('fs').promises;
 const https = require('https');
 const { safeLoad: yaml } = require('js-yaml');
 const { join } = require('path');
@@ -178,12 +178,22 @@ function loadGroup(group, locale = 'en') {
     return fs.readFileSync(path, 'utf8');
 }
 
-async function getFiles(dir) {
-    const dirents = await readdir(dir, { withFileTypes: true });
-    const files = await Promise.all(dirents.map(dirent => {
-        const res = join(dir, dirent.name);
-        return dirent.isDirectory() ? getFiles(res) : res;
-    }));
+async function getFiles(...paths) {
+    let files = [];
+
+    for (const path of paths) {
+        if ((await stat(path)).isFile()) {
+            files.push(path);
+            continue;
+        }
+
+        const dirents = await readdir(path, { withFileTypes: true });
+
+        files = files.concat(await Promise.all(dirents.map(dirent => {
+            const res = join(path, dirent.name);
+            return dirent.isDirectory() ? getFiles(res) : res;
+        })));
+    }
 
     return files.flat();
 }
@@ -195,6 +205,10 @@ function replaceLineEndings(content, ending) {
     content = content.replace(/\r\n|\r|\n/g, ending);
 
     return { content, originalEnding };
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(() => resolve(), ms));
 }
 
 module.exports = {
@@ -210,5 +224,6 @@ module.exports = {
     modeString,
     replaceLineEndings,
     scrapeUser,
+    sleep,
     userLink
 };

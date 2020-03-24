@@ -6,10 +6,10 @@ const { getFiles } = require('./include');
 
 const firstArg = process.argv[2];
 const excludeOutdated = firstArg === '--exclude-outdated' || firstArg === '-x';
-const subDirectories = process.argv.slice(excludeOutdated ? 3 : 2);
+const paths = process.argv.slice(excludeOutdated ? 3 : 2);
 
-if (subDirectories.length === 0)
-    subDirectories.push('');
+if (paths.length === 0)
+    paths.push('.');
 
 const broken = new Set();
 let trailingSlashCount = 0;
@@ -42,14 +42,9 @@ async function findBrokenRefs(path) {
 }
 
 (async () => {
-    for (const subDirectory of subDirectories) {
-        if (subDirectory.endsWith('.md'))
-            await findBrokenRefs(subDirectory);
-        else
-            for (const path of await getFiles(join(__dirname, '..', subDirectory)))
-                if (path.endsWith('.md'))
-                    await findBrokenRefs(path);
-    }
+    for (const path of await getFiles(...paths))
+        if (path.endsWith('.md'))
+            await findBrokenRefs(path);
 
     for (const ref of broken)
         console.error(ref);
