@@ -5,55 +5,66 @@ const { safeLoad: yaml } = require('js-yaml');
 const { join } = require('path');
 
 function nestedProperty(object, property) {
-    const propQueue = property.split('.');
-    let current = object;
+    return property.split('.').reduce(
+        (previous, current) => {
+            if (previous[current] === undefined) {
+                console.error(`Property ${current} (${property}) is not defined`);
+                return;
+            }
 
-    while (propQueue.length !== 0)
-        current = current[propQueue.shift()];
-
-    return current;
+            return previous[current];
+        },
+        object
+    );
 }
 
 function reEscape(text) {
     return text.replace(/[[\\^$.|?*+()]/g, '\\$&');
 }
 
-function translateTournament(originalContent, originalInfo, translatedInfo) {
-    const re = (pattern, flags = '') =>
-        new RegExp(
-            pattern.replace(
-                /\{([a-z_.]+?)\}/g,
-                (_, prop) => reEscape(nestedProperty(originalInfo, prop))
-            ),
-            flags
-        );
+function translateTournament(content, originalInfo, translatedInfo) {
+    const replaceContent = (property, beforeRe, afterRe, flags) => {
+        const pattern =
+            (beforeRe ? `(?<=${beforeRe})` : '') +
+            reEscape(nestedProperty(originalInfo, property)) +
+            (afterRe ? `(?=${afterRe})` : '');
 
-    return originalContent
-        .replace(re('(?<=^# ){title}'), translatedInfo.title)
-        .replace(re('^{info}$', 'm'), translatedInfo.info)
-        .replace(re('(?<=## ){wc.title}'), translatedInfo.wc.title)
-        .replace(re('^{wc.info}$', 'm'), translatedInfo.wc.info)
-        .replace(re('{wc.owc}$', 'm'), translatedInfo.wc.owc)
-        .replace(re('{wc.twc}$', 'm'), translatedInfo.wc.twc)
-        .replace(re('{wc.cwc}$', 'm'), translatedInfo.wc.cwc)
-        .replace(re('{wc.mwc}$', 'm'), translatedInfo.wc.mwc)
-        .replace(re('(?<=## ){community.title}'), translatedInfo.community.title)
-        .replace(re('^{community.info}$', 'm'), translatedInfo.community.info)
-        .replace(re('(?<=!\\[){crowns.gold}(?=\\]\\[)', 'g'), translatedInfo.crowns.gold)
-        .replace(re('(?<=!\\[){crowns.silver}(?=\\]\\[)', 'g'), translatedInfo.crowns.silver)
-        .replace(re('(?<=!\\[){crowns.bronze}(?=\\]\\[)', 'g'), translatedInfo.crowns.bronze)
-        .replace(re('(?<= "){crowns.first}(?=")'), translatedInfo.crowns.first)
-        .replace(re('(?<= "){crowns.second}(?=")'), translatedInfo.crowns.second)
-        .replace(re('(?<= "){crowns.third}(?=")'), translatedInfo.crowns.third)
-        .replace(re('(?<=\| ){table.name}(?= \|)', 'g'), translatedInfo.table.name)
-        .replace(re('(?<=\| ){table.start}(?= \|)', 'g'), translatedInfo.table.start)
-        .replace(re('(?<=\| ){table.end}(?= \|)', 'g'), translatedInfo.table.end)
-        .replace(re('(?<=\| ){table.date}(?= \|)', 'g'), translatedInfo.table.date)
-        .replace(re('(?<=## ){see_also.title}'), translatedInfo.see_also.title)
-        .replace(re('(?<=\\[){see_also.country_list}(?=\\])'), translatedInfo.see_also.country_list)
-        .replace(re('{see_also.client_note}$', 'm'), translatedInfo.see_also.client_note);
+        content = content.replace(
+            new RegExp(pattern, flags),
+            nestedProperty(translatedInfo, property)
+        );
+    }
+
+    [
+        ['title', '^# ', null, ''],
+        ['info', '^', '$', 'm'],
+        ['wc.title', '^## ', '$', 'm'],
+        ['wc.info', '^', '$', 'm'],
+        ['wc.owc', ' ', '$', 'm'],
+        ['wc.twc', ' ', '$', 'm'],
+        ['wc.cwc', ' ', '$', 'm'],
+        ['wc.mwc', ' ', '$', 'm'],
+        ['community.title', '^## ', '$', 'm'],
+        ['community.info', '^', '$', 'm'],
+        ['crowns.gold', '!\\[', '\\]\\[', 'g'],
+        ['crowns.silver', '!\\[', '\\]\\[', 'g'],
+        ['crowns.bronze', '!\\[', '\\]\\[', 'g'],
+        ['crowns.first', ' "', '"', ''],
+        ['crowns.second', ' "', '"', ''],
+        ['crowns.third', ' "', '"', ''],
+        ['table.name', '\\| ', ' \\|', 'g'],
+        ['table.start', '\\| ', ' \\|', 'g'],
+        ['table.end', '\\| ', ' \\|', 'g'],
+        ['table.date', '\\| ', ' \\|', 'g'],
+        ['see_also.title', '^## ', '$', 'm'],
+        ['see_also.country_list', '\\[', '\\]\\(', ''],
+        ['see_also.client_note', ' ', '$', 'm']
+    ]
+        .forEach(args => replaceContent(...args));
 
     // TODO: translate country names
+
+    return content;
 }
 
 const metaPath = join(__dirname, `../meta/tournament-index`);
