@@ -1,0 +1,54 @@
+#!/usr/bin/env node
+
+const { readFileSync } = require('fs');
+const { get } = require('https');
+const { getFiles, sleep } = require('./include');
+
+let args = process.argv.slice(2);
+let pattern = 'https?://(?:osu|new|old|jizz|news|status)\\.ppy\\.sh/';
+
+if (args[0] === '--uri') {
+    pattern += args[1].replace(/^\/+/g, '');
+    args = args.slice(2);
+}
+
+pattern = `\\]\\((${pattern}.+?)\\)|^\\[.+\\]: (${pattern}.+?)(?: "|$)|["<](${pattern}.+?)[">]`;
+
+(async () => {
+    for (const path of await getFiles(...args)) {
+        if (!path.endsWith('.md'))
+            continue;
+
+        const content = readFileSync(path, 'utf8');
+
+        for (const match of content.matchAll(RegExp(pattern, 'gm'))) {
+            const url = match[1] || match[2] || match[3];
+
+            get(url, res => {
+                switch (res.statusCode) {
+                    case 301:
+                    case 302:
+                    case 404:
+                        console.log(url);
+                        return;
+                    case 200:
+                        break;
+                    default:
+                        console.error(`Got status code ${res.statusCode}`);
+                        return;
+                }
+
+                let data = '';
+
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                    if (data.includes('The page you were looking for can\'t be found...'))
+                        console.log(url);
+                });
+            })
+                .on('error', err => console.error(err));
+
+            await sleep(1500);
+        }
+    }
+})();
