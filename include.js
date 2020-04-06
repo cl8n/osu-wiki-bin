@@ -164,6 +164,11 @@ function groupTranslation(locale) {
     return yaml(contents);
 }
 
+function getRedirects() {
+    const contents = fs.readFileSync(join(__dirname, `../wiki/redirect.yaml`), 'utf8');
+    return yaml(contents);
+}
+
 const groupMap = {
     'Beatmap_Nominators': [28, 32],
     'Developers': [11],
@@ -216,6 +221,7 @@ module.exports = {
     beatmapsetLink,
     config,
     getFiles,
+    getRedirects,
     groupMap,
     groupMembers,
     groupTranslation,
