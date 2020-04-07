@@ -25,7 +25,7 @@ async function findBrokenRefs(path) {
     for (const match of file.matchAll(/\[.*?\]\((.+?)(?:#.+?)?(?: ".+?")?\)|^\[.*?\]: (.+?)(?:#.+?)?(?: ".+?")?$/gm)) {
         let ref = match[1] || match[2];
 
-        if (ref.match(/^(?:https?:\/\/|mailto:|#)/) !== null)
+        if (ref.match(/^[a-z]+:\/\/|^mailto:|^#/) !== null)
             continue;
 
         const realRef = ref.startsWith('/')
