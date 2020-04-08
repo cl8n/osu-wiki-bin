@@ -159,11 +159,6 @@ async function scrapeUser(userId) {
     return JSON.parse(json);
 }
 
-function groupTranslation(locale) {
-    const contents = fs.readFileSync(join(__dirname, `../meta/group-info/${locale}.yaml`), 'utf8');
-    return yaml(contents);
-}
-
 function getRedirects() {
     const contents = fs.readFileSync(join(__dirname, `../wiki/redirect.yaml`), 'utf8');
     return yaml(contents);
@@ -203,7 +198,7 @@ async function getFiles(...paths) {
     return files.flat();
 }
 
-function replaceLineEndings(content, ending) {
+function replaceLineEndings(content, ending = '\n') {
     const originalEndingMatch = content.match(/\r\n|\r|\n/);
     const originalEnding = originalEndingMatch === null ? null : originalEndingMatch[0];
 
@@ -216,6 +211,16 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(() => resolve(), ms));
 }
 
+function nestedProperty(object, property) {
+    const keys = property.split('.');
+    let value = object;
+
+    for (let i = 0; i < keys.length && value !== undefined; i++)
+        value = value[keys[i]];
+
+    return value;
+}
+
 module.exports = {
     beatmapLink,
     beatmapsetLink,
@@ -224,10 +229,10 @@ module.exports = {
     getRedirects,
     groupMap,
     groupMembers,
-    groupTranslation,
     loadGroup,
     md,
     modeString,
+    nestedProperty,
     replaceLineEndings,
     scrapeUser,
     sleep,
