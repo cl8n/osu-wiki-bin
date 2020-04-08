@@ -5,7 +5,7 @@ const { join } = require('path');
 const { replaceLineEndings } = require('./include');
 
 function fixFlagRefs(content, flagNames) {
-    const normalizedEndings = replaceLineEndings(content, '\n');
+    const normalizedEndings = replaceLineEndings(content);
 
     content = normalizedEndings.content
         .replace(/\n*$/, '\n')

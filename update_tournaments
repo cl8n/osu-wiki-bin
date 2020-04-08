@@ -3,20 +3,7 @@
 const { readdirSync, readFileSync, writeFileSync } = require('fs');
 const { safeLoad: yaml } = require('js-yaml');
 const { join } = require('path');
-
-function nestedProperty(object, property) {
-    return property.split('.').reduce(
-        (previous, current) => {
-            if (previous[current] === undefined) {
-                console.error(`Property ${current} (${property}) is not defined`);
-                return;
-            }
-
-            return previous[current];
-        },
-        object
-    );
-}
+const { nestedProperty } = require('./include');
 
 function reEscape(text) {
     return text.replace(/[[\\^$.|?*+()]/g, '\\$&');
