@@ -1,10 +1,6 @@
 const { readFile, writeFile } = require('fs').promises;
 const { beatmapLink, beatmapsetLink, userLink } = require('./include');
 
-function run(options) {
-    return Promise.all(options._.map(file => replace(file, !options['no-flags'])));
-}
-
 async function replace(file, flag) {
     let content = await readFile(file, 'utf8');
 
@@ -25,8 +21,11 @@ async function replace(file, flag) {
     await writeFile(file, content);
 }
 
+function run(options) {
+    return Promise.all(options._.map(file => replace(file, !options['no-flags'])));
+}
+
 module.exports = {
-    name: 'fetch',
     options: {
         f: '=no-flags',
         'no-flags': 'boolean'
