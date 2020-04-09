@@ -6,7 +6,7 @@ const { join } = require('path');
 const { nestedProperty } = require('./include');
 
 function reEscape(text) {
-    return text.replace(/[[\\^$.|?*+()]/g, '\\$&');
+    return text.replace(/[[\]\\^$.|?*+()]/g, '\\$&');
 }
 
 function translateTournament(content, originalInfo, translatedInfo) {
@@ -20,7 +20,7 @@ function translateTournament(content, originalInfo, translatedInfo) {
             new RegExp(pattern, flags),
             nestedProperty(translatedInfo, property)
         );
-    }
+    };
 
     [
         ['title', '^# ', null, ''],
