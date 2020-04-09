@@ -1,12 +1,37 @@
-const { readdir, readFile, writeFile } = require('fs').promises;
+const { readdir, readFile, stat, writeFile } = require('fs').promises;
 const { safeLoad: yaml } = require('js-yaml');
 const { join } = require('path');
 const { nestedProperty, replaceLineEndings } = require('./include');
 
+function flattenObject(object, prefix = '') {
+    const flattened = {};
+    if (prefix !== '')
+        prefix += '.';
+
+    for (const property in object) {
+        if (!object.hasOwnProperty(property))
+            continue;
+
+        if (typeof object[property] === 'object' && object[property] !== null)
+            Object.assign(flattened, flattenObject(object[property], prefix + property));
+        else
+            flattened[prefix + property] = object[property];
+    }
+
+    return flattened;
+}
+
+function getKey(object, value) {
+    const keySearch = Object.entries(flattenObject(object))
+        .find(([, v]) => v === value);
+
+    return keySearch && keySearch[0];
+}
+
 async function run(options) {
     const metaPath = join(__dirname, '../meta/group-info');
     const teamPath = join(__dirname, '../wiki/People/The_Team');
-    const englishInfo = await readFile(join(metaPath, 'en.yaml'), 'utf8');
+    const englishInfo = yaml(await readFile(join(metaPath, 'en.yaml'), 'utf8'));
     const englishBn = replaceLineEndings(await readFile(join(teamPath, 'Beatmap_Nominators/en.md'), 'utf8')).content;
     const englishGmt = replaceLineEndings(await readFile(join(teamPath, 'Global_Moderation_Team/en.md'), 'utf8')).content;
     const englishNat = replaceLineEndings(await readFile(join(teamPath, 'Nomination_Assessment_Team/en.md'), 'utf8')).content;
@@ -15,7 +40,7 @@ async function run(options) {
         if (groupInfoFilename === 'en.yaml')
             continue;
 
-        readFile(join(metaPath, groupInfoFilename), 'utf8').then(groupInfoFile => {
+        readFile(join(metaPath, groupInfoFilename), 'utf8').then(async groupInfoFile => {
             const groupInfo = yaml(groupInfoFile);
             const language = groupInfoFilename.replace(/\.yaml$/, '');
             const getString = key => nestedProperty(groupInfo, key) || nestedProperty(englishInfo, key);
@@ -23,22 +48,56 @@ async function run(options) {
             // Beatmap Nominators
             if (options.group === undefined || options.group.match(/bng?/i)) {
                 const bnFilename = join(teamPath, `Beatmap_Nominators/${language}.md`);
-                const bn = replaceLineEndings(await readFile(bnFilename, 'utf8'));
 
-                if (bn.content.match(/^\| :-- \| :-- \|$/gm).length !== 8) {
+                try { await stat(bnFilename); }
+                catch (error) {
+                    if (error.code !== 'ENOENT')
+                        throw error;
+
+                    return;
+                }
+
+                const bn = replaceLineEndings(await readFile(bnFilename, 'utf8'));
+                const tableHeadersMatch = bn.content.match(/^\| :-- \| :-- \|$/gm);
+
+                if (tableHeadersMatch === null || tableHeadersMatch.length !== 8) {
                     console.error(`${language} BN page formatting is too old`);
                     return;
                 }
 
-                // "REMOVE_ME" is a hacky way to step through tables in the
-                // translation by breaking the match as it goes. After all the
-                // replacements are done, we delete all instances of "REMOVE_ME"
-                for (const tableMatch of englishBn.matchAll(/^\| :-- \| :-- \|\n((?:\|.+\n)+)/gm))
-                    bn.content = bn.content.replace(/(?<=^\| :-- \| :-- \|\n)(?:\|.+\n)+/m, `REMOVE_ME${tableMatch[1]}`);
-                bn.content = bn.content.replace(/REMOVE_ME/g, '');
+                for (const tableMatch of englishBn.matchAll(/\| :-- \| :-- \|\n((?:\|.+\n)+)/g)) {
+                    let table = tableMatch[1];
 
-                // TODO: Replace languages
+                    table = table.replace(/(?<=^\|.+?\| ).+(?= \|$)/gm, spLanguagesString => {
+                        const englishSpLanguages = spLanguagesString.split(', ');
+                        const spLanguages = [];
 
+                        for (const spLanguage of englishSpLanguages) {
+                            let key = getKey(englishInfo, spLanguage);
+                            if (key !== undefined) {
+                                spLanguages.push(getString(key));
+                                continue;
+                            }
+
+                            const partialMatch = spLanguage.match(/^some (.+)$/);
+                            if (partialMatch === null)
+                                throw `Key not found for ${spLanguage}`;
+
+                            let newLanguage = getString(getKey(englishInfo, partialMatch[1]));
+                            newLanguage = getString('languages.partial').replace('<language>', newLanguage);
+                            spLanguages.push(newLanguage);
+                        }
+
+                        return spLanguages.join(getString('separator'));
+                    });
+
+                    // "REMOVE_ME" is a hacky way to step through tables in the
+                    // translation by breaking the match as it goes. After all the
+                    // replacements are done, we delete all instances of "REMOVE_ME"
+                    bn.content = bn.content.replace(/(?<=\| :-- \| :-- \|\n)(?:\|.+\n)+/, `REMOVE_ME${table}`);
+                }
+
+                bn.content = bn.content.replace(/REMOVE_ME|<!-- TODO -->/g, '');
                 writeFile(bnFilename, replaceLineEndings(bn.content, bn.originalEnding).content);
             }
 
