@@ -127,15 +127,18 @@ async function beatmapsetLink(beatmapsetId) {
 }
 
 async function groupMembers(groupId) {
-    const userSearch = /"id":(\d+),/g;
+    const userSearch = /","id":(\d+),"is_active":/g;
     const url = `https://osu.ppy.sh/groups/${groupId}?sort=username`;
-    const data = await new Promise((resolve, reject) => {
+    let data = await new Promise((resolve, reject) => {
         https.get(url, res => {
             let data = '';
             res.on('data', chunk => data += chunk);
             res.on('end', () => resolve(data));
         }).on('error', err => reject(err.message));
     });
+
+    data = data.substring(data.indexOf('id="json-users"'));
+
     const userIds = [];
     let match;
 
