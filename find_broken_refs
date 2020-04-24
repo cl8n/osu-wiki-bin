@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const { readFile, stat } = require('fs').promises;
-const { dirname, join } = require('path');
+const { basename, dirname, join } = require('path');
 const { getFiles, getRedirects } = require('./include');
 
 const firstArg = process.argv[2];
@@ -22,28 +22,69 @@ async function findBrokenRefs(path) {
     if (excludeOutdated && path.endsWith('.md') && !path.endsWith('en.md') && file.match(/^outdated: true$/m) !== null)
         return;
 
-    for (const match of file.matchAll(/\[.*?\]\((.+?)(?:#.+?)?(?: ".+?")?\)|^\[.*?\]: (.+?)(?:#.+?)?(?: ".+?")?$/gm)) {
-        let ref = match[1] || match[2];
+    for (const match of file.matchAll(/\[.*?\]\((.+?(?:#.+?)?)(?: ".+?")?\)|^\[.*?\]: (.+?(?:#.+?)?)(?: ".+?")?$/gm)) {
+        const [ref, section] = (match[1] || match[2]).split('#');
 
-        if (ref.match(/^[a-z]+:\/\/|^mailto:|^#/) !== null)
+        if (ref.match(/^[a-z]+:\/\/|^mailto:/) !== null)
             continue;
 
+        let refExists = true;
         const realRef = ref.startsWith('/')
             ? join(__dirname, '..', ref)
             : join(dirname(path), ref);
 
-        try {
-            await stat(realRef);
-        } catch (e) {
-            if (!checkRedirects ||
-                !ref.startsWith('/wiki/') ||
-                redirects[ref.replace('/wiki/', '').toLowerCase()] === undefined
-            )
-                broken.add(ref);
-        }
+        if (ref !== '')
+            try {
+                await stat(realRef);
+            } catch (e) {
+                if (!checkRedirects ||
+                    !ref.startsWith('/wiki/') ||
+                    redirects[ref.replace('/wiki/', '').toLowerCase()] === undefined
+                )
+                    broken.add(ref);
+
+                refExists = false;
+            }
 
         if (ref.endsWith('/'))
             ++trailingSlashCount;
+
+        if (section !== undefined) {
+            if (!refExists) {
+                broken.add(`${ref}#${section}`);
+                continue;
+            }
+
+            let refMdPath = join(realRef, basename(path));
+            try {
+                await stat(refMdPath);
+            } catch (e) {
+                try {
+                    refMdPath = join(realRef, 'en.md');
+                } catch (e2) {
+                    broken.add(`${ref}#${section}`);
+                    continue;
+                }
+            }
+
+            const refFile = await readFile(refMdPath, 'utf8');
+            const sectionSlugs = [];
+            const sectionSlugLevels = {};
+
+            for (const headerMatch of refFile.matchAll(/^#{2,3} (.+)$/gm)) {
+                let slug = headerMatch[1].toLowerCase().replace(/ /g, '-');
+
+                if (sectionSlugLevels[slug] === undefined)
+                    sectionSlugLevels[slug] = 0;
+                else
+                    slug += `.${++sectionSlugLevels[slug]}`;
+
+                sectionSlugs.push(slug);
+            }
+
+            if (!sectionSlugs.includes(section))
+                broken.add(`${ref}#${section}`);
+        }
     }
 }
 
@@ -55,6 +96,6 @@ async function findBrokenRefs(path) {
     for (const ref of broken)
         console.error(ref);
 
-    console.log(`There are ${broken.size} unique broken references.`);
-    console.log(`${trailingSlashCount} references have a trailing slash.`);
+    if (trailingSlashCount !== 0)
+        console.error(`${trailingSlashCount} references have a trailing slash.`);
 })();
