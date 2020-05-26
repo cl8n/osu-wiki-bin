@@ -27,8 +27,7 @@ function run(options) {
 
 module.exports = {
     options: {
-        f: '=no-flags',
-        'no-flags': 'boolean'
+        f: '=no-flags', 'no-flags': 'boolean'
     },
     run
 };

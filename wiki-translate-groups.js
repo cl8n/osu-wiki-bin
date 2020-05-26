@@ -114,8 +114,7 @@ async function run(options) {
 
 module.exports = {
     options: {
-        g: '=group',
-        group: 'string'
+        g: '=group', group: 'string'
     },
     run
 };
