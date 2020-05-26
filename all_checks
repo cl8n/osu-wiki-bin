@@ -1,0 +1,11 @@
+#!/bin/sh
+
+bin_dir="$(cd "$(dirname "$0")" && pwd)"
+
+if test "$1" = --online; then
+    shift
+    "$bin_dir"/find_osu_404 "$@"
+fi
+
+"$bin_dir"/../node_modules/.bin/remark --no-stdout -q "$@"
+"$bin_dir"/wiki find-broken-refs "$@"
