@@ -1,6 +1,7 @@
 {
   "private": true,
   "dependencies": {
+    "colors": "^1.4.0",
     "js-yaml": "^3.13.1"
   }
 }
