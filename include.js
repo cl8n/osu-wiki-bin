@@ -227,7 +227,6 @@ function nestedProperty(object, property) {
 module.exports = {
     beatmapLink,
     beatmapsetLink,
-    config,
     getFiles,
     getRedirects,
     groupMap,
