@@ -194,11 +194,15 @@ async function getFiles(...paths) {
 
         files = files.concat(await Promise.all(dirents.map(dirent => {
             const res = join(path, dirent.name);
+
+            if (dirent.isDirectory() && dirent.name === 'node_modules')
+                return;
+
             return dirent.isDirectory() ? getFiles(res) : res;
         })));
     }
 
-    return files.flat();
+    return files.flat().filter(file => file !== undefined);
 }
 
 function replaceLineEndings(content, ending = '\n') {
