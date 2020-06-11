@@ -9,6 +9,7 @@ function findBrokenRefs(path, allowRedirects, excludeOutdated) {
     const file = readFileSync(path, 'utf8');
     let trailingSlashCount = 0;
     const brokenRefs = new Set();
+    const aTagSlugs = file.match(/(?<=<a.+?id=").+?(?=".*?>.*?<\/a>)/g) || [];
 
     if (excludeOutdated && path.endsWith('.md') && !path.endsWith('en.md') && file.match(/^outdated: true$/m) !== null)
         return;
@@ -71,7 +72,7 @@ function findBrokenRefs(path, allowRedirects, excludeOutdated) {
                 sectionSlugs.push(slug);
             }
 
-            if (!sectionSlugs.includes(section))
+            if (!sectionSlugs.includes(section) && !aTagSlugs.includes(section))
                 brokenRefs.add(`${ref}#${section}`);
         }
     }
