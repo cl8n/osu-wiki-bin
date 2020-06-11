@@ -12,7 +12,7 @@ function findBrokenRefs(path, allowRedirects, excludeOutdated) {
     const aTagSlugs = file.match(/(?<=<a.+?id=").+?(?=".*?>.*?<\/a>)/g) || [];
 
     if (excludeOutdated && path.endsWith('.md') && !path.endsWith('en.md') && file.match(/^outdated: true$/m) !== null)
-        return;
+        return [trailingSlashCount, brokenRefs];
 
     for (const match of file.matchAll(/\[.*?\]\((.+?(?:#.+?)?)(?: ".+?")?\)|^\[.*?\]: (.+?(?:#.+?)?)(?: ".+?")?$/gm)) {
         const [ref, section] = (match[1] || match[2]).split('#');
