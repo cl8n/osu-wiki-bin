@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+const { existsSync } = require('fs');
+const { join } = require('path');
+
 function getOption(options, arg) {
     arg = arg.replace(/^-+|=.+$/g, '');
     const type = options[arg];
@@ -54,18 +57,13 @@ function getOptions(command, args) {
 }
 
 const commandName = process.argv[2] || 'help';
-let command;
 
-try {
-    command = require(`./wiki-${commandName}`);
-}
-catch (error) {
-    if (error.code !== 'MODULE_NOT_FOUND')
-        throw error;
-
+if (!existsSync(join(__dirname, `wiki-${commandName}.js`))) {
     console.error(`Invalid command "${commandName}". Type "wiki help" for help.`);
     process.exit(1);
 }
+
+const command = require(`./wiki-${commandName}`);
 
 if (command.options === undefined)
     command.options = {};
