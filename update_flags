@@ -2,9 +2,12 @@
 
 const { readFileSync, writeFileSync } = require('fs');
 const { join } = require('path');
-const { replaceLineEndings } = require('./include');
+const { getFiles, replaceLineEndings } = require('./include');
 
 function fixFlagRefs(content, flagNames) {
+    if (content.match(/!\[[A-Z_]*\]\[flag_([A-Z_]+)\]/) === null)
+        return content;
+
     const normalizedEndings = replaceLineEndings(content);
 
     content = normalizedEndings.content
@@ -31,24 +34,29 @@ function fixFlagRefs(content, flagNames) {
 
 const flagNamesByLocale = {};
 
-for (const file of process.argv.slice(2)) {
-    const localeMatch = file.match(/[a-z-]+\.md$/);
-    const locale = localeMatch === null ? 'en.md' : localeMatch[0];
-    let flagNames = flagNamesByLocale[locale];
+getFiles(...process.argv.slice(2)).then(files => {
+    for (const file of files) {
+        if (!file.endsWith('.md'))
+            continue;
 
-    if (flagNames === undefined) {
-        flagNames = {};
+        const localeMatch = file.match(/[a-z-]+\.md$/);
+        const locale = localeMatch === null ? 'en.md' : localeMatch[0];
+        let flagNames = flagNamesByLocale[locale];
 
-        try {
-            const flagNamesFile = join(__dirname, '../meta/flag-references', locale);
-            const flagNamesMd = readFileSync(flagNamesFile, 'utf8');
+        if (flagNames === undefined) {
+            flagNames = {};
 
-            for (const flagMatch of flagNamesMd.matchAll(/\[flag_([A-Z_]+)\].+\1\.gif "(.+)"/g))
-                flagNames[flagMatch[1]] = flagMatch[2];
-        } catch {}
+            try {
+                const flagNamesFile = join(__dirname, '../meta/flag-references', locale);
+                const flagNamesMd = readFileSync(flagNamesFile, 'utf8');
 
-        flagNamesByLocale[locale] = flagNames;
+                for (const flagMatch of flagNamesMd.matchAll(/\[flag_([A-Z_]+)\].+\1\.gif "(.+)"/g))
+                    flagNames[flagMatch[1]] = flagMatch[2];
+            } catch {}
+
+            flagNamesByLocale[locale] = flagNames;
+        }
+
+        writeFileSync(file, fixFlagRefs(readFileSync(file, 'utf8'), flagNames));
     }
-
-    writeFileSync(file, fixFlagRefs(readFileSync(file, 'utf8'), flagNames));
-}
+});
