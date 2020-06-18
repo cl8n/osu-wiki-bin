@@ -1,4 +1,5 @@
-const { existsSync, readdirSync, readFileSync, writeFile } = require('fs');
+const { exec } = require('child_process');
+const { existsSync, readdirSync, readFileSync, writeFileSync } = require('fs');
 const { safeLoad: yaml } = require('js-yaml');
 const { join } = require('path');
 const { nestedProperty, replaceLineEndings } = require('./include');
@@ -86,7 +87,8 @@ function updateBnTranslation(englishInfo, englishBn, getString, language, teamPa
 
     bn.content = bn.content.replace(/REMOVE_ME/g, '');
 
-    writeFile(bnFilename, replaceLineEndings(bn.content, bn.originalEnding).content, () => {});
+    writeFileSync(bnFilename, replaceLineEndings(bn.content, bn.originalEnding).content);
+    exec('node ' + join(__dirname, 'update_flags') + ' ' + bnFilename);
 }
 
 function updateGmtTranslation(englishInfo, englishGmt, getString, language, teamPath) {
@@ -130,7 +132,8 @@ function updateGmtTranslation(englishInfo, englishGmt, getString, language, team
     gmt.content = gmt.content.replace(/(?<=\| :-- \| :-- \| :-- \|\n)(?:\|.+\n)+/, table2);
     gmt.content = gmt.content.replace(/REMOVE_ME/g, '');
 
-    writeFile(gmtFilename, replaceLineEndings(gmt.content, gmt.originalEnding).content, () => {});
+    writeFileSync(gmtFilename, replaceLineEndings(gmt.content, gmt.originalEnding).content);
+    exec('node ' + join(__dirname, 'update_flags') + ' ' + gmtFilename);
 }
 
 function updateNatTranslation(englishInfo, englishNat, getString, language, teamPath) {
@@ -173,7 +176,8 @@ function updateNatTranslation(englishInfo, englishNat, getString, language, team
 
     nat.content = nat.content.replace(/REMOVE_ME/g, '');
 
-    writeFile(natFilename, replaceLineEndings(nat.content, nat.originalEnding).content, () => {});
+    writeFileSync(natFilename, replaceLineEndings(nat.content, nat.originalEnding).content);
+    exec('node ' + join(__dirname, 'update_flags') + ' ' + natFilename);
 }
 
 function updateAluTranslation(englishInfo, englishAlu, getString, language, teamPath) {
@@ -203,7 +207,8 @@ function updateAluTranslation(englishInfo, englishAlu, getString, language, team
 
     alu.content = alu.content.replace(/(?<=\| :-- \| :-- \|\n)(?:\|.+\n)+/, table);
 
-    writeFile(aluFilename, replaceLineEndings(alu.content, alu.originalEnding).content, () => {});
+    writeFileSync(aluFilename, replaceLineEndings(alu.content, alu.originalEnding).content);
+    exec('node ' + join(__dirname, 'update_flags') + ' ' + aluFilename);
 }
 
 function updateSupTranslation(englishInfo, englishSup, getString, language, teamPath) {
@@ -226,7 +231,8 @@ function updateSupTranslation(englishInfo, englishSup, getString, language, team
     sup.content = sup.content
         .replace(/(?<=\| :-- \| :-- \|\n)(?:\|.+\n)+/, table);
 
-    writeFile(supFilename, replaceLineEndings(sup.content, sup.originalEnding).content, () => {});
+    writeFileSync(supFilename, replaceLineEndings(sup.content, sup.originalEnding).content);
+    exec('node ' + join(__dirname, 'update_flags') + ' ' + supFilename);
 }
 
 function run(options) {
