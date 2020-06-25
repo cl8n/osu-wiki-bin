@@ -14,7 +14,7 @@ function findBrokenRefs(path, allowRedirects, excludeOutdated) {
     if (excludeOutdated && path.endsWith('.md') && !path.endsWith('en.md') && file.match(/^outdated: true$/m) !== null)
         return [trailingSlashCount, brokenRefs];
 
-    for (const match of file.matchAll(/\[.*?\]\((.+?(?:#.+?)?)(?: ".+?")?\)|^\[.*?\]: (.+?(?:#.+?)?)(?: ".+?")?$/gm)) {
+    for (const match of file.matchAll(/\[.*?\]\((\S+(?:#\S*)?)(?: ".+?")?\)|^\[.*?\]: (\S+(?:#\S*)?)(?: ".+?")?$/gm)) {
         const [ref, section] = (match[1] || match[2]).split('#');
 
         if (ref.match(/^[a-z]+:\/\/|^mailto:/) !== null)
@@ -38,7 +38,7 @@ function findBrokenRefs(path, allowRedirects, excludeOutdated) {
             refExists = false;
         }
 
-        if (section !== undefined) {
+        if (section) {
             if (!refExists) {
                 brokenRefs.add(`${ref}#${section}`);
                 continue;
