@@ -1,11 +1,21 @@
 #!/bin/sh
 
 bin_dir="$(cd "$(dirname "$0")" && pwd)"
+online=0
 
 if test "$1" = --online; then
+    online=1
     shift
-    "$bin_dir"/find_osu_404 "$@"
+fi
+
+if test "$#" -eq 0; then
+    # this only works when used somewhere in osu-wiki
+    set -- $(git diff master --name-only | xargs echo)
 fi
 
 "$bin_dir"/../node_modules/.bin/remark --no-stdout -q "$@"
 "$bin_dir"/wiki find-broken-refs "$@"
+
+if test $online -eq 1; then
+    "$bin_dir"/find_osu_404 "$@"
+fi
