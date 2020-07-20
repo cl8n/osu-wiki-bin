@@ -10,12 +10,19 @@ fi
 
 if test "$#" -eq 0; then
     # this only works when used somewhere in osu-wiki
-    set -- $(git diff master --name-only | xargs echo)
+    set -- $(git diff master --name-only '*.md' | xargs echo)
 fi
 
+echo 'Running remark...'
 "$bin_dir"/../node_modules/.bin/remark --no-stdout -q "$@"
+
+echo 'Running find-broken-refs...'
 "$bin_dir"/wiki find-broken-refs "$@"
 
+echo 'Running find-redundant-redirects...'
+"$bin_dir"/wiki find-redundant-redirects
+
 if test $online -eq 1; then
+    echo 'Running find_osu_404...'
     "$bin_dir"/find_osu_404 "$@"
 fi
