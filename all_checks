@@ -11,6 +11,9 @@ fi
 if test "$#" -eq 0; then
     # this only works when used somewhere in osu-wiki
     set -- $(git diff master --name-only '*.md' | xargs echo)
+
+    echo 'Running find-redundant-redirects...'
+    "$bin_dir"/wiki find-redundant-redirects
 fi
 
 echo 'Running remark...'
@@ -18,9 +21,6 @@ echo 'Running remark...'
 
 echo 'Running find-broken-refs...'
 "$bin_dir"/wiki find-broken-refs "$@"
-
-echo 'Running find-redundant-redirects...'
-"$bin_dir"/wiki find-redundant-redirects
 
 if test $online -eq 1; then
     echo 'Running find_osu_404...'
