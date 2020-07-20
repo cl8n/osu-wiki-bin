@@ -10,7 +10,7 @@ fi
 
 if test "$#" -eq 0; then
     # this only works when used somewhere in osu-wiki
-    set -- $(git diff master --name-only '*.md' | xargs echo)
+    set -- $(git diff master... --name-only '*.md' | xargs echo)
 
     echo 'Running find-redundant-redirects...'
     "$bin_dir"/wiki find-redundant-redirects
