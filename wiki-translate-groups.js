@@ -8,6 +8,10 @@ function lowerCaseFirst(string) {
     return string.charAt(0).toLowerCase() + string.slice(1);
 }
 
+function upperCaseFirst(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
 function flattenObject(object, prefix = '') {
     const flattened = {};
     if (prefix !== '')
@@ -37,11 +41,14 @@ function spLanguageReplacer(englishInfo, getString) {
     return spLanguagesString => {
         const englishSpLanguages = spLanguagesString.split(englishInfo.separator);
         const spLanguages = [];
+        const pushLanguage = (language) => {
+            spLanguages.push(spLanguages.length > 0 ? language : upperCaseFirst(language));
+        };
 
         for (const spLanguage of englishSpLanguages) {
             let key = getKey(englishInfo, spLanguage, 'languages');
             if (key !== undefined) {
-                spLanguages.push(getString(key));
+                pushLanguage(getString(key));
                 continue;
             }
 
@@ -51,9 +58,8 @@ function spLanguageReplacer(englishInfo, getString) {
                 throw `Key not found for ${spLanguage}`;
 
             let newLanguage = getString(getKey(englishInfo, partialMatch[1], 'languages'));
-            newLanguage = (spLanguages.length > 0 ? lowerCaseFirst(getString('languages.partial')) : getString('languages.partial'))
-                .replace('<language>', newLanguage);
-            spLanguages.push(newLanguage);
+            newLanguage = getString('languages.partial').replace('<language>', newLanguage);
+            pushLanguage(newLanguage);
         }
 
         return spLanguages.join(getString('separator'));
