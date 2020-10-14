@@ -8,15 +8,18 @@ export function loadWikiPath() {
         repository?: string;
     }
 
+    const expectedRepository = 'github:ppy/osu-wiki';
+    const packageFilename = 'package.json';
+
     let path = '.';
 
-    while (!readdirSync(path).includes('package.json')) {
+    while (!readdirSync(path).includes(packageFilename)) {
         path = join(path, '..');
     }
 
-    const packageInfo = JSON.parse(readFileSync(join(path, 'package.json'), 'utf8')) as PackageInfo;
+    const packageInfo = JSON.parse(readFileSync(join(path, packageFilename), 'utf8')) as PackageInfo;
 
-    if (packageInfo.repository === 'github:ppy/osu-wiki') {
+    if (packageInfo.repository === expectedRepository) {
         wikiPath = path;
         return true;
     } else {
