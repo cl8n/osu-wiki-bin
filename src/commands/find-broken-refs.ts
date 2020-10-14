@@ -2,6 +2,7 @@ import { red, yellow } from 'chalk';
 import { Command } from 'commander';
 import { existsSync, readFileSync } from 'fs';
 import { basename, dirname, join } from 'path';
+import { wikiPath } from '../wiki';
 import { getFiles, getRedirects } from '../../include';
 
 interface FindBrokenRefsOptions {
@@ -32,7 +33,7 @@ function findBrokenRefsForPath(path: string, allowRedirects: boolean, excludeOut
 
         let refExists = true;
         const realRef = ref.startsWith('/')
-            ? join(__dirname, '..', ref)
+            ? join(wikiPath, ref)
             : join(dirname(path), ref);
 
         if (ref !== '' && !existsSync(realRef)) {

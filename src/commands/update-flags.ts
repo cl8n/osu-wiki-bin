@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { wikiPath } from '../wiki';
 import { getFiles, replaceLineEndings } from '../../include';
 
 function fixFlagRefs(content: string, flagNames: { [key: string]: string }) {
@@ -46,7 +47,7 @@ async function updateFlags(paths: string[]) {
             flagNames = {};
 
             try {
-                const flagNamesFile = join(__dirname, '../meta/flag-references', locale);
+                const flagNamesFile = join(wikiPath, 'meta/flag-references', locale);
                 const flagNamesMd = readFileSync(flagNamesFile, 'utf8');
 
                 for (const flagMatch of flagNamesMd.matchAll(/\[flag_([A-Z_]+)\].+\1\.gif "(.+)"/g))
