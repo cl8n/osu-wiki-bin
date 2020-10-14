@@ -65,7 +65,8 @@ async function updateFlags(paths: string[]) {
 }
 
 export function updateFlagsCommandBuilder() {
-    return new Command('update-flags [paths...]')
+    return new Command('update-flags')
+        .arguments('[paths...]')
         .description('Update flag reference definitions')
         .action(updateFlags);
 }

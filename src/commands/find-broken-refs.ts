@@ -122,10 +122,11 @@ async function findBrokenRefs(paths: string[], options: FindBrokenRefsOptions) {
 }
 
 export function findBrokenRefsCommandBuilder() {
-    return new Command('find-broken-refs [paths...]')
+    return new Command('find-broken-refs')
+        .arguments('[paths...]')
         .description('Find broken link and image references')
-        .option('-a|--aggregate', 'Aggregate output')
-        .option('-r|--allow-redirects', "Don't count redirects as broken references")
-        .option('-o|--exclude-outdated', "Don't search in outdated articles")
+        .option('-a, --aggregate', 'Aggregate output')
+        .option('-r, --allow-redirects', "Don't count redirects as broken references")
+        .option('-o, --exclude-outdated', "Don't search in outdated articles")
         .action(findBrokenRefs);
 }

@@ -35,8 +35,9 @@ async function replace(paths: string[], options: ReplaceOptions) {
 }
 
 export function replaceCommandBuilder() {
-    return new Command('replace [paths...]')
+    return new Command('replace')
+        .arguments('[paths...]')
         .description('Replace osu! object patterns with links')
-        .option('-f|--no-flags', "Don't include flags before user links")
+        .option('-f, --no-flags', "Don't include flags before user links")
         .action(replace);
 }

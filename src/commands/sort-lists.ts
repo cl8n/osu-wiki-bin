@@ -40,7 +40,8 @@ async function sortLists(paths: string[]) {
 }
 
 export function sortListsCommandBuilder() {
-    return new Command('sort-lists [paths...]')
+    return new Command('sort-lists')
+        .arguments('[paths...]')
         .description('Sort lists of users') // TODO: more than users!
         .action(sortLists);
 }
