@@ -4,7 +4,7 @@
     "osu-wiki": "./dist/cli.js"
   },
   "description": "Tools for osu-wiki contributors",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "dependencies": {
     "chalk": "^4.1.0",
     "colors": "^1.4.0",
