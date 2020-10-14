@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 
 // TODO: error checking...
@@ -13,7 +13,7 @@ export function loadWikiPath() {
 
     let path = '.';
 
-    while (!readdirSync(path).includes(packageFilename)) {
+    while (!existsSync(join(path, packageFilename))) {
         path = join(path, '..');
     }
 
