@@ -1,5 +1,6 @@
 import { Command } from 'commander';
-import { readFile } from 'fs/promises';
+import { promises as fsPromises } from 'fs';
+const { readFile } = fsPromises;
 import { join } from 'path';
 import { wikiPath } from '../wiki';
 import { scrapeUser } from '../../include';

@@ -1,7 +1,7 @@
 {
   "name": "osu-wiki",
   "description": "Tools for osu-wiki contributors",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "bin": {
     "osu-wiki": "./dist/src/cli.js"
   },

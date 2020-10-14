@@ -1,5 +1,6 @@
 import { Command } from 'commander';
-import { readFile, writeFile } from 'fs/promises';
+import { promises as fsPromises } from 'fs';
+const { readFile, writeFile } = fsPromises;
 import { beatmapLink, beatmapsetLink, userLink } from '../../include';
 
 interface ReplaceOptions {
