@@ -3,7 +3,7 @@
   "description": "Tools for osu-wiki contributors",
   "version": "0.4.1",
   "bin": {
-    "osu-wiki": "./dist/cli.js"
+    "osu-wiki": "./dist/src/cli.js"
   },
   "dependencies": {
     "chalk": "^4.1.0",
