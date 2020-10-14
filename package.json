@@ -1,10 +1,10 @@
 {
-  "private": true,
+  "name": "osu-wiki",
+  "description": "Tools for osu-wiki contributors",
+  "version": "0.4.1",
   "bin": {
     "osu-wiki": "./dist/cli.js"
   },
-  "description": "Tools for osu-wiki contributors",
-  "version": "0.4.1",
   "dependencies": {
     "chalk": "^4.1.0",
     "colors": "^1.4.0",
