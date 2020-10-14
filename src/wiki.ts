@@ -1,5 +1,33 @@
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
+
+interface OsuWikiConfig {
+    osuApiKey?: string;
+    qatApiKey?: string;
+}
+
+// TODO: error checking... and has to be called after loadWikiPath
+let _config: OsuWikiConfig;
+export function loadConfig() {
+    const configPath = join(wikiPath, '.osu-wiki.json');
+
+    if (existsSync(configPath)) {
+        _config = JSON.parse(readFileSync(configPath, 'utf8')) as OsuWikiConfig;
+    } else {
+        _config = {};
+        writeFileSync(configPath, '{\n\n}');
+    }
+}
+
+export function config(key: keyof OsuWikiConfig) {
+    const value = _config[key];
+
+    if (value !== undefined) {
+        return value;
+    }
+
+    throw new Error(`Config option "${key}" must be set`);
+}
 
 // TODO: error checking...
 export let wikiPath: string;

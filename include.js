@@ -3,7 +3,7 @@ const { readdir, stat } = require('fs').promises;
 const https = require('https');
 const { safeLoad: yaml } = require('js-yaml');
 const { join } = require('path');
-const config = require('./config.json');
+const { config } = require('./src/wiki');
 
 function md(text) {
     return text.replace(/[_\[\]\(\)*~\\]/g, '\\$&');
@@ -22,7 +22,7 @@ function modeString(modeId) {
 }
 
 function osuApi(endpoint, params) {
-    let url = `https://osu.ppy.sh/api/${endpoint}?k=${config.api_key}`;
+    let url = `https://osu.ppy.sh/api/${endpoint}?k=${config('osuApiKey')}`;
     Object.keys(params).forEach(k => url += `&${k}=${params[k]}`);
 
     return new Promise((resolve, reject) => {
