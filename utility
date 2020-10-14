@@ -43,45 +43,14 @@ function ulToOl(path, line) {
     fs.writeFileSync(path, lines.join('\n'));
 }
 
-function sortUserLists(path) {
-    const file = fs.readFileSync(path, 'utf8');
-    let lines = file.split('\n');
-
-    let currentList = [];
-    let currentListStart = null;
-    for (let i = 0; i < lines.length; ++i) {
-        const match = lines[i].match(/^[-|] !\[\]\[flag_..\] \[(.+?)\]\(https.+$/);
-        if (match !== null) {
-            if (currentListStart === null)
-                currentListStart = i;
-
-            currentList.push([match[1], match[0]]);
-        } else if (currentListStart !== null) {
-            lines = lines.slice(0, currentListStart)
-                .concat(currentList
-                    .sort((a, b) => a[0].localeCompare(b[0]))
-                    .map(l => l[1]))
-                .concat(lines.slice(i));
-
-            currentList = [];
-            currentListStart = null;
-        }
-    }
-
-    fs.writeFileSync(path, lines.join('\n'));
-}
-
 switch (process.argv[2]) {
     default:
-        console.log('Usage:\n    --check-group <group>\n    --ul-to-ol <file> <line>\n    --sort-user-lists <file>');
+        console.log('Usage:\n    --check-group <group>\n    --ul-to-ol <file> <line>');
         break;
     case '--check-group':
         checkGroup(process.argv[3]);
         break;
     case '--ul-to-ol':
         ulToOl(process.argv[3], process.argv[4]);
-        break;
-    case '--sort-user-lists':
-        sortUserLists(process.argv[3]);
         break;
 }
