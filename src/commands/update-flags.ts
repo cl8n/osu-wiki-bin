@@ -1,10 +1,9 @@
-#!/usr/bin/env node
+import { Command } from 'commander';
+import { readFileSync, writeFileSync } from 'fs';
+import { join } from 'path';
+import { getFiles, replaceLineEndings } from '../../include';
 
-const { readFileSync, writeFileSync } = require('fs');
-const { join } = require('path');
-const { getFiles, replaceLineEndings } = require('./include');
-
-function fixFlagRefs(content, flagNames) {
+function fixFlagRefs(content: string, flagNames: { [key: string]: string }) {
     if (content.match(/!\[[A-Z_]*\]\[flag_([A-Z_]+)\]/) === null)
         return content;
 
@@ -15,7 +14,7 @@ function fixFlagRefs(content, flagNames) {
         .replace(/^\[flag_[A-Z_]+\]: \/wiki\/shared\/flag\/.+\n/gm, '')
         .replace(/\n*$/, '\n\n');
 
-    const flags = new Set();
+    const flags: Set<string> = new Set();
 
     for (const flagMatch of content.matchAll(/!\[[A-Z_]*\]\[flag_([A-Z_]+)\]/g))
         flags.add(flagMatch[1]);
@@ -32,14 +31,14 @@ function fixFlagRefs(content, flagNames) {
     return replaceLineEndings(content, normalizedEndings.originalEnding).content;
 }
 
-const flagNamesByLocale = {};
+async function updateFlags(paths: string[]) {
+    const flagNamesByLocale: { [key: string]: { [key: string]: string } } = {};
 
-getFiles(...process.argv.slice(2)).then(files => {
-    for (const file of files) {
-        if (!file.endsWith('.md'))
+    for (const path of await getFiles(...paths)) {
+        if (!path.endsWith('.md'))
             continue;
 
-        const localeMatch = file.match(/[a-z-]+\.md$/);
+        const localeMatch = path.match(/[a-z-]+\.md$/);
         const locale = localeMatch === null ? 'en.md' : localeMatch[0];
         let flagNames = flagNamesByLocale[locale];
 
@@ -57,6 +56,12 @@ getFiles(...process.argv.slice(2)).then(files => {
             flagNamesByLocale[locale] = flagNames;
         }
 
-        writeFileSync(file, fixFlagRefs(readFileSync(file, 'utf8'), flagNames));
+        writeFileSync(path, fixFlagRefs(readFileSync(path, 'utf8'), flagNames));
     }
-});
+}
+
+export function updateFlagsCommandBuilder() {
+    return new Command('update-flags [paths...]')
+        .description('Update flag reference definitions')
+        .action(updateFlags);
+}
