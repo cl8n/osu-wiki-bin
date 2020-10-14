@@ -15,7 +15,7 @@ export function loadConfig() {
         _config = JSON.parse(readFileSync(configPath, 'utf8')) as OsuWikiConfig;
     } else {
         _config = {};
-        writeFileSync(configPath, '{\n\n}');
+        writeFileSync(configPath, '{\n\n}\n');
     }
 }
 
