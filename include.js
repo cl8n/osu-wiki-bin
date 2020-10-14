@@ -162,9 +162,14 @@ async function scrapeUser(userId) {
     return JSON.parse(json);
 }
 
+let redirects;
 function getRedirects() {
-    const contents = fs.readFileSync(join(__dirname, `../wiki/redirect.yaml`), 'utf8');
-    return yaml(contents);
+    if (redirects === undefined) {
+        const contents = fs.readFileSync(join(__dirname, `../wiki/redirect.yaml`), 'utf8');
+        redirects = yaml(contents);
+    }
+
+    return redirects;
 }
 
 const groupMap = {

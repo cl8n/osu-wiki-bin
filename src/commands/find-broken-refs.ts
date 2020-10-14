@@ -11,8 +11,6 @@ interface FindBrokenRefsOptions {
     excludeOutdated: boolean;
 }
 
-const redirects = getRedirects();
-
 function findBrokenRefsForPath(path: string, allowRedirects: boolean, excludeOutdated: boolean): [number, Set<string>] {
     const file = readFileSync(path, 'utf8');
     let trailingSlashCount = 0;
@@ -39,7 +37,7 @@ function findBrokenRefsForPath(path: string, allowRedirects: boolean, excludeOut
         if (ref !== '' && !existsSync(realRef)) {
             if (!allowRedirects ||
                 !ref.startsWith('/wiki/') ||
-                redirects[ref.replace('/wiki/', '').toLowerCase()] === undefined
+                getRedirects()[ref.replace('/wiki/', '').toLowerCase()] === undefined
             )
                 brokenRefs.add(ref);
 
