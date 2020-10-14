@@ -31,6 +31,9 @@ function sortListsInPath(path: string) {
 }
 
 async function sortLists(paths: string[]) {
+    if (paths.length === 0)
+        paths.push('.');
+
     for (const path of await getFiles(...paths))
         if (path.endsWith('.md'))
             sortListsInPath(path);

@@ -33,6 +33,9 @@ function fixFlagRefs(content: string, flagNames: { [key: string]: string }) {
 }
 
 async function updateFlags(paths: string[]) {
+    if (paths.length === 0)
+        paths.push('.');
+
     const flagNamesByLocale: { [key: string]: { [key: string]: string } } = {};
 
     for (const path of await getFiles(...paths)) {
