@@ -2,6 +2,9 @@
   "name": "osu-wiki",
   "description": "Tools for osu-wiki contributors",
   "version": "0.6.1",
+  "scripts": {
+    "build": "tsc"
+  },
   "bin": {
     "osu-wiki": "./dist/src/cli.js"
   },
