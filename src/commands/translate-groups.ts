@@ -1,5 +1,5 @@
 import { DeepDictionary, Dictionary } from '@cl8n/types';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { Command } from 'commander';
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'fs';
 import { safeLoad as yaml } from 'js-yaml';
@@ -7,7 +7,7 @@ import { join } from 'path';
 import { wikiPath } from '../wiki';
 import { nestedProperty, replaceLineEndings } from '../../include';
 
-// whole thing is so shit
+// TODO whole thing is so shit
 // upgrade me
 
 interface TranslateGroupsOptions {
@@ -100,6 +100,15 @@ function spLanguageReplacer(englishInfo: GroupYaml, getString: (key: string) => 
     }
 }
 
+// TODO should really just call the function directly...
+function updateFlags(filename: string) {
+    execFile(process.argv[0], [
+        process.argv[1],
+        'update-flags',
+        filename,
+    ]);
+}
+
 const updateBnTranslation: Translator = function (englishInfo, englishBn, getString, language, teamPath) {
     const bnFilename = join(teamPath, `Beatmap_Nominators/${language}.md`);
 
@@ -128,7 +137,7 @@ const updateBnTranslation: Translator = function (englishInfo, englishBn, getStr
     bn.content = bn.content.replace(/REMOVE_ME/g, '');
 
     writeFileSync(bnFilename, replaceLineEndings(bn.content, bn.originalEnding).content);
-    exec('node ' + join(__dirname, 'update_flags') + ' ' + bnFilename);
+    updateFlags(bnFilename);
 }
 
 const updateGmtTranslation: Translator = function (englishInfo, englishGmt, getString, language, teamPath) {
@@ -173,7 +182,7 @@ const updateGmtTranslation: Translator = function (englishInfo, englishGmt, getS
     gmt.content = gmt.content.replace(/REMOVE_ME/g, '');
 
     writeFileSync(gmtFilename, replaceLineEndings(gmt.content, gmt.originalEnding).content);
-    exec('node ' + join(__dirname, 'update_flags') + ' ' + gmtFilename);
+    updateFlags(gmtFilename);
 }
 
 const updateNatTranslation: Translator = function (englishInfo, englishNat, getString, language, teamPath) {
@@ -217,7 +226,7 @@ const updateNatTranslation: Translator = function (englishInfo, englishNat, getS
     nat.content = nat.content.replace(/REMOVE_ME/g, '');
 
     writeFileSync(natFilename, replaceLineEndings(nat.content, nat.originalEnding).content);
-    exec('node ' + join(__dirname, 'update_flags') + ' ' + natFilename);
+    updateFlags(natFilename);
 }
 
 const updateAluTranslation: Translator = function (englishInfo, englishAlu, getString, language, teamPath) {
@@ -248,7 +257,7 @@ const updateAluTranslation: Translator = function (englishInfo, englishAlu, getS
     alu.content = alu.content.replace(/(?<=\| :-- \| :-- \|\n)(?:\|.+\n)+/, table);
 
     writeFileSync(aluFilename, replaceLineEndings(alu.content, alu.originalEnding).content);
-    exec('node ' + join(__dirname, 'update_flags') + ' ' + aluFilename);
+    updateFlags(aluFilename);
 }
 
 const updateSupTranslation: Translator = function (englishInfo, englishSup, getString, language, teamPath) {
@@ -272,7 +281,7 @@ const updateSupTranslation: Translator = function (englishInfo, englishSup, getS
         .replace(/(?<=\| :-- \| :-- \|\n)(?:\|.+\n)+/, table);
 
     writeFileSync(supFilename, replaceLineEndings(sup.content, sup.originalEnding).content);
-    exec('node ' + join(__dirname, 'update_flags') + ' ' + supFilename);
+    updateFlags(supFilename);
 }
 
 function translateGroups(options: TranslateGroupsOptions) {
