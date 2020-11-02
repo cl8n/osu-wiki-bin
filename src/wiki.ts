@@ -1,4 +1,5 @@
 import type { Empty } from '@cl8n/types';
+import { yellow } from 'chalk';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
@@ -15,13 +16,14 @@ const blankConfig: Required<Empty<OsuWikiConfig>> = {
 // TODO: error checking... and has to be called after loadWikiPath
 let _config: OsuWikiConfig;
 export function loadConfig() {
-    const configPath = join(wikiPath, '.osu-wiki.json');
+    const configPath = join(wikiPath, '.osu-wiki-bin.json');
 
     if (existsSync(configPath)) {
         _config = JSON.parse(readFileSync(configPath, 'utf8')) as OsuWikiConfig;
     } else {
         _config = {};
         writeFileSync(configPath, JSON.stringify(blankConfig, undefined, 2) + '\n');
+        console.error(yellow(`No config options set. Some commands won't work without an API key.\nSee ${configPath}`));
     }
 }
 
