@@ -1,3 +1,4 @@
+import type { Empty } from '@cl8n/types';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
@@ -5,6 +6,11 @@ interface OsuWikiConfig {
     osuApiKey?: string;
     qatApiKey?: string;
 }
+
+const blankConfig: Required<Empty<OsuWikiConfig>> = {
+    osuApiKey: '',
+    qatApiKey: '',
+};
 
 // TODO: error checking... and has to be called after loadWikiPath
 let _config: OsuWikiConfig;
@@ -15,7 +21,7 @@ export function loadConfig() {
         _config = JSON.parse(readFileSync(configPath, 'utf8')) as OsuWikiConfig;
     } else {
         _config = {};
-        writeFileSync(configPath, '{\n\n}\n');
+        writeFileSync(configPath, JSON.stringify(blankConfig, undefined, 2) + '\n');
     }
 }
 
