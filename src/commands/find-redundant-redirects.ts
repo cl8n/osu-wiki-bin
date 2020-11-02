@@ -1,7 +1,7 @@
-import { red } from 'chalk';
 import { Command } from 'commander';
 import { readdirSync } from 'fs';
 import { join } from 'path';
+import { errorX } from '../console';
 import { wikiPath } from '../wiki';
 import { getRedirects } from '../../include';
 
@@ -31,7 +31,7 @@ function isRedirect(path: string) {
 function findRedundantRedirects() {
     for (const [source, target] of (Object.entries(getRedirects()) as [string, string][])) {
         if (wikiDirectoryExists(source) || isRedirect(target)) {
-            console.log(red(source));
+            errorX(source);
         }
     }
 }

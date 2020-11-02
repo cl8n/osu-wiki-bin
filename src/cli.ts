@@ -1,15 +1,14 @@
 #!/usr/bin/env node
 
-import { red } from 'chalk';
 import { Command } from 'commander';
 import { commandBuilders } from './commands';
+import { error } from './console';
 import { packageInfo } from './package';
 import { loadConfig, loadWikiPath } from './wiki';
 
 // TODO: let user specify wiki dir too
 if (!loadWikiPath()) {
-    console.error(red('Error: Program must be run inside an osu-wiki repository'));
-    process.exit(1);
+    error('Program must be run inside an osu-wiki repository', 1);
 }
 
 loadConfig();

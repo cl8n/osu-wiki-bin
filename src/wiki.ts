@@ -1,7 +1,7 @@
 import type { Empty } from '@cl8n/types';
-import { yellow } from 'chalk';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { warning } from './console';
 
 interface OsuWikiConfig {
     osuApiKey?: string;
@@ -23,7 +23,7 @@ export function loadConfig() {
     } else {
         _config = {};
         writeFileSync(configPath, JSON.stringify(blankConfig, undefined, 2) + '\n');
-        console.error(yellow(`No config options set. Some commands won't work without an API key.\nSee ${configPath}`));
+        warning(`No config options set. Some commands won't work without an API key.\nSee ${configPath}`);
     }
 }
 

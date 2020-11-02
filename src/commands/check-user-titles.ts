@@ -4,6 +4,7 @@ const { readFile } = fsPromises;
 import { join } from 'path';
 import { wikiPath } from '../wiki';
 import { scrapeUser } from '../../include';
+import { errorX } from '../console';
 
 // TODO: would be nice to also check titles missing from the article, but this isn't possible with web api yet
 async function checkUserTitles() {
@@ -15,7 +16,7 @@ async function checkUserTitles() {
         const user = await scrapeUser(matchGroups.id);
 
         if (user.title !== matchGroups.title)
-            console.log(user.username);
+            errorX(user.username);
     }
 }
 

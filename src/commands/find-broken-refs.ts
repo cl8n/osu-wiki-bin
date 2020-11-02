@@ -1,9 +1,9 @@
-import { red, yellow } from 'chalk';
 import { Command } from 'commander';
 import { existsSync, readFileSync } from 'fs';
 import { basename, dirname, join } from 'path';
 import { wikiPath } from '../wiki';
 import { getFiles, getRedirects } from '../../include';
+import { errorX, warningX } from '../console';
 
 interface FindBrokenRefsOptions {
     aggregate: boolean;
@@ -88,11 +88,11 @@ function findBrokenRefsForPath(path: string, allowRedirects: boolean, excludeOut
 
 function printWarnings(trailingSlashCount: number, brokenRefs: Set<string>, prefix = '') {
     if (trailingSlashCount !== 0)
-        console.log(yellow(`${prefix}${trailingSlashCount} references have a trailing slash.`));
+        warningX(`${prefix}${trailingSlashCount} references have a trailing slash.`);
 
     if (brokenRefs.size !== 0)
         for (const ref of brokenRefs)
-            console.log(red(`${prefix}${ref}`));
+            errorX(`${prefix}${ref}`);
 }
 
 async function findBrokenRefs(paths: string[], options: FindBrokenRefsOptions) {

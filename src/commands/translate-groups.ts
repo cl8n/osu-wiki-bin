@@ -4,6 +4,7 @@ import { Command } from 'commander';
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'fs';
 import { safeLoad as yaml } from 'js-yaml';
 import { join } from 'path';
+import { warning } from '../console';
 import { wikiPath } from '../wiki';
 import { nestedProperty, replaceLineEndings } from '../../include';
 
@@ -119,7 +120,7 @@ const updateBnTranslation: Translator = function (englishInfo, englishBn, getStr
     const tableHeadersMatch = bn.content.match(/^\| :-- \| :-- \|$/gm);
 
     if (tableHeadersMatch === null || tableHeadersMatch.length !== 8) {
-        console.error(`${language} BN page formatting is too old`);
+        warning(`${language} BN page formatting is too old, skipping`);
         return;
     }
 
@@ -150,7 +151,7 @@ const updateGmtTranslation: Translator = function (englishInfo, englishGmt, getS
     const tableHeadersMatch = gmt.content.match(/^\| :-- \| :-- \| :-- \|$/gm);
 
     if (tableHeadersMatch === null || tableHeadersMatch.length !== 2) {
-        console.error(`${language} GMT page formatting is too old`);
+        warning(`${language} GMT page formatting is too old, skipping`);
         return;
     }
 
@@ -195,7 +196,7 @@ const updateNatTranslation: Translator = function (englishInfo, englishNat, getS
     const tableHeadersMatch = nat.content.match(/^\| :-- \| :-- \| :-- \|$/gm);
 
     if (tableHeadersMatch === null || tableHeadersMatch.length !== 4) {
-        console.error(`${language} NAT page formatting is too old`);
+        warning(`${language} NAT page formatting is too old, skipping`);
         return;
     }
 
@@ -239,7 +240,7 @@ const updateAluTranslation: Translator = function (englishInfo, englishAlu, getS
     const tableHeadersMatch = alu.content.match(/^\| :-- \| :-- \|$/gm);
 
     if (tableHeadersMatch === null || tableHeadersMatch.length !== 1) {
-        console.error(`${language} osu! Alumni page formatting is too old`);
+        warning(`${language} osu! Alumni page formatting is too old, skipping`);
         return;
     }
 
@@ -270,7 +271,7 @@ const updateSupTranslation: Translator = function (englishInfo, englishSup, getS
     const tableHeadersMatch = sup.content.match(/^\| :-- \| :-- \|$/gm);
 
     if (tableHeadersMatch === null || tableHeadersMatch.length !== 1) {
-        console.error(`${language} Support Team page formatting is too old`);
+        warning(`${language} Support Team page formatting is too old, skipping`);
         return;
     }
 
