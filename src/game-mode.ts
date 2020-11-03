@@ -1,6 +1,6 @@
-const linkNames = ['osu', 'taiko', 'fruits', 'mania'];
-const longNames = ['osu!standard', 'osu!taiko', 'osu!catch', 'osu!mania'];
-const shortNames = ['osu', 'taiko', 'catch', 'mania'];
+const linkNames = ['osu', 'taiko', 'fruits', 'mania'] as const;
+const longNames = ['osu!standard', 'osu!taiko', 'osu!catch', 'osu!mania'] as const;
+const shortNames = ['osu', 'taiko', 'catch', 'mania'] as const;
 
 // TODO: Stricter typing
 export class GameMode {
