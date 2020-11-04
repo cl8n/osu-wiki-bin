@@ -1,8 +1,9 @@
 import { Command } from 'commander';
 import { existsSync, readFileSync } from 'fs';
 import { basename, dirname, join } from 'path';
+import { getFiles } from '../files';
+import { getRedirects } from '../redirects';
 import { wikiPath } from '../wiki';
-import { getFiles, getRedirects } from '../../include';
 import { errorX, warningX } from '../console';
 
 interface FindBrokenRefsOptions {

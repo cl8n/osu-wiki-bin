@@ -62,3 +62,17 @@ export function loadWikiPath() {
         return false;
     }
 }
+
+export const groupMap = {
+    'Beatmap_Nominators': [28, 32],
+    'Developers': [11],
+    'Global_Moderation_Team': [4],
+    'Nomination_Assessment_Team': [7],
+    'osu!_Alumni': [16],
+    'Support_Team': [22],
+};
+
+export function loadGroup(group: string, locale: string = 'en'): string {
+    const path = join(__dirname, `../wiki/People/The_Team/${group}/${locale}.md`);
+    return readFileSync(path, 'utf8');
+}

@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { readFileSync, writeFileSync } from 'fs';
-import { getFiles } from '../../include';
+import { getFiles } from '../files';
 
 function sortListsInPath(path: string) {
     const file = readFileSync(path, 'utf8');

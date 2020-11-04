@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { promises as fsPromises } from 'fs';
 const { readFile, writeFile } = fsPromises;
-import { beatmapLink, beatmapsetLink, userLink } from '../../include';
+import { beatmapLink, beatmapsetLink, userLink } from '../api';
 
 interface ReplaceOptions {
     flags: boolean;

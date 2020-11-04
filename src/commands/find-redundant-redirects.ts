@@ -3,7 +3,7 @@ import { readdirSync } from 'fs';
 import { join } from 'path';
 import { errorX } from '../console';
 import { wikiPath } from '../wiki';
-import { getRedirects } from '../../include';
+import { getRedirects } from '../redirects';
 
 // TODO: can save a lot of filesystem lookups here
 

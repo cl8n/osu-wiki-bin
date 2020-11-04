@@ -1,8 +1,9 @@
 import { Command } from 'commander';
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { replaceLineEndings } from '../text';
 import { wikiPath } from '../wiki';
-import { getFiles, replaceLineEndings } from '../../include';
+import { getFiles } from '../files';
 
 function fixFlagRefs(content: string, flagNames: { [key: string]: string }) {
     if (content.match(/!\[[A-Z_]*\]\[flag_([A-Z_]+)\]/) === null)

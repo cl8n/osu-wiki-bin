@@ -5,8 +5,9 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from 'fs';
 import { safeLoad as yaml } from 'js-yaml';
 import { join } from 'path';
 import { warning } from '../console';
+import { replaceLineEndings } from '../text';
 import { wikiPath } from '../wiki';
-import { nestedProperty, replaceLineEndings } from '../../include';
+import { nestedProperty } from '../deep';
 
 // TODO whole thing is so shit
 // upgrade me

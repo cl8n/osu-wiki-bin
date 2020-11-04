@@ -3,7 +3,7 @@ import { promises as fsPromises } from 'fs';
 const { readFile } = fsPromises;
 import { join } from 'path';
 import { wikiPath } from '../wiki';
-import { scrapeUser } from '../../include';
+import { scrapeUser } from '../web';
 import { errorX } from '../console';
 
 // TODO: would be nice to also check titles missing from the article, but this isn't possible with web api yet
