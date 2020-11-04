@@ -1,4 +1,5 @@
-import { readdir, stat } from 'fs/promises';
+import { promises as fsPromises } from 'fs';
+const { readdir, stat } = fsPromises;
 import { join } from 'path';
 
 export async function getFiles(...paths: string[]): Promise<string[]> {
