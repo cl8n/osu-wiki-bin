@@ -1,5 +1,6 @@
-import type { Empty } from '@cl8n/types';
+import type { Dictionary, Empty } from '@cl8n/types';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { safeLoad as yaml } from 'js-yaml';
 import { join } from 'path';
 import { warning } from './console';
 
@@ -75,4 +76,14 @@ export const groupMap = {
 export function loadGroup(group: string, locale: string = 'en'): string {
     const path = join(wikiPath, `wiki/People/The_Team/${group}/${locale}.md`);
     return readFileSync(path, 'utf8');
+}
+
+let redirects: Dictionary<string> | undefined;
+export function getRedirects(): Dictionary<string> {
+    if (redirects === undefined) {
+        const contents = readFileSync(join(wikiPath, `wiki/redirect.yaml`), 'utf8');
+        redirects = yaml(contents) as Dictionary<string>;
+    }
+
+    return redirects;
 }

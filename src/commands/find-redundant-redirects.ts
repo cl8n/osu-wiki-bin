@@ -2,8 +2,7 @@ import { Command } from 'commander';
 import { readdirSync } from 'fs';
 import { join } from 'path';
 import { errorX } from '../console';
-import { wikiPath } from '../wiki';
-import { getRedirects } from '../redirects';
+import { getRedirects, wikiPath } from '../wiki';
 
 // TODO: can save a lot of filesystem lookups here
 
