@@ -73,6 +73,6 @@ export const groupMap = {
 };
 
 export function loadGroup(group: string, locale: string = 'en'): string {
-    const path = join(__dirname, `../wiki/People/The_Team/${group}/${locale}.md`);
+    const path = join(wikiPath, `wiki/People/The_Team/${group}/${locale}.md`);
     return readFileSync(path, 'utf8');
 }
