@@ -3,4 +3,4 @@ interface PackageInfo {
     version: string;
 }
 
-export const packageInfo = require('../../package.json') as PackageInfo;
+export const packageInfo = require('../package.json') as PackageInfo;
