@@ -14,7 +14,7 @@
     "build": "tsc"
   },
   "bin": {
-    "osu-wiki": "./dist/src/cli.js"
+    "osu-wiki": "./dist/cli.js"
   },
   "dependencies": {
     "chalk": "^4.1.0",
