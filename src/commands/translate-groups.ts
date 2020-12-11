@@ -297,6 +297,9 @@ function translateGroups(options: TranslateGroupsOptions) {
     const englishAlu = replaceLineEndings(readFileSync(join(teamPath, 'osu!_Alumni/en.md'), 'utf8')).content.replace(/<!-- TODO -->/g, '');
     const englishSup = replaceLineEndings(readFileSync(join(teamPath, 'Support_Team/en.md'), 'utf8')).content.replace(/<!-- TODO -->/g, '');
 
+    for (const group of ['Beatmap_Nominators', 'Global_Moderation_Team', 'Nomination_Assessment_Team', 'osu!_Alumni', 'Support_Team'])
+        updateFlags(join(teamPath, `${group}/en.md`));
+
     // TODO lol
     const checkAllGroups = options.group == null;
     const checkGroups = {
