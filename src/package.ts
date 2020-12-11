@@ -1,5 +1,6 @@
 interface PackageInfo {
     description: string;
+    name: string;
     version: string;
 }
 

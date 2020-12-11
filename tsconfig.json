@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
         "allowJs": true, // TODO
+        "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "lib": ["ES2019", "ES2020.BigInt", "ES2020.String"],
         "module": "CommonJS",
