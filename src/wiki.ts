@@ -22,7 +22,7 @@ export function loadConfig() {
     if (existsSync(configPath)) {
         _config = JSON.parse(readFileSync(configPath, 'utf8')) as OsuWikiConfig;
     } else {
-        _config = {};
+        _config = blankConfig;
         writeFileSync(configPath, JSON.stringify(blankConfig, undefined, 2) + '\n');
         warning(`No config options set. Some commands won't work without an API key.\nSee ${configPath}`);
     }
@@ -31,7 +31,7 @@ export function loadConfig() {
 export function config(key: keyof OsuWikiConfig) {
     const value = _config[key];
 
-    if (value !== undefined) {
+    if (value != null && value !== blankConfig[key]) {
         return value;
     }
 
