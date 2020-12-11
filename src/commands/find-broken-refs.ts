@@ -101,9 +101,8 @@ async function findBrokenRefs(paths: string[], options: FindBrokenRefsOptions) {
 
     const brokenRefInfos: { [key: string]: [number, Set<string> ]} = {};
 
-    for (const path of await getFiles(...paths))
-        if (path.endsWith('.md'))
-            brokenRefInfos[path] = findBrokenRefsForPath(path, options.allowRedirects, options.excludeOutdated);
+    for (const path of await getFiles(paths, 'md'))
+        brokenRefInfos[path] = findBrokenRefsForPath(path, options.allowRedirects, options.excludeOutdated);
 
     if (options.aggregate) {
         const [trailingSlashCount, brokenRefs] = Object.values(brokenRefInfos)

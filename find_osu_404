@@ -16,10 +16,7 @@ if (args[0] === '--uri') {
 pattern = `\\]\\((${pattern}.+?)\\)|^\\[.+\\]: (${pattern}.+?)(?: "|$)|["<](${pattern}.+?)[">]`;
 
 (async () => {
-    for (const path of await getFiles(...args)) {
-        if (!path.endsWith('.md'))
-            continue;
-
+    for (const path of await getFiles(args, 'md')) {
         const content = readFileSync(path, 'utf8');
 
         for (const match of content.matchAll(RegExp(pattern, 'gm'))) {

@@ -39,10 +39,7 @@ async function updateFlags(paths: string[]) {
 
     const flagNamesByLocale: { [key: string]: { [key: string]: string } } = {};
 
-    for (const path of await getFiles(...paths)) {
-        if (!path.endsWith('.md'))
-            continue;
-
+    for (const path of await getFiles(paths, 'md')) {
         const localeMatch = path.match(/[a-z-]+\.md$/);
         const locale = localeMatch === null ? 'en.md' : localeMatch[0];
         let flagNames = flagNamesByLocale[locale];

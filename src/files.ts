@@ -2,7 +2,7 @@ import { promises as fsPromises } from 'fs';
 const { readdir, stat } = fsPromises;
 import { join } from 'path';
 
-export async function getFiles(...paths: string[]): Promise<string[]> {
+export async function getFiles(paths: string[], extension?: string): Promise<string[]> {
     let files: string[] = [];
 
     for (const path of paths) {
@@ -19,9 +19,14 @@ export async function getFiles(...paths: string[]): Promise<string[]> {
             if (dirent.isDirectory() && dirent.name === 'node_modules')
                 return [];
 
-            return dirent.isDirectory() ? getFiles(res) : [res];
+            return dirent.isDirectory() ? getFiles([res]) : [res];
         })));
     }
 
-    return files.filter((file) => file !== undefined);
+    files = files.filter((file) => file != null);
+
+    if (extension != null)
+        files = files.filter((file) => file.endsWith(`.${extension}`));
+
+    return files;
 }
