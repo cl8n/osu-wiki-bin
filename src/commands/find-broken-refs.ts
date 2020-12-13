@@ -114,9 +114,9 @@ async function findBrokenRefs(paths: string[], options: FindBrokenRefsOptions) {
             if (trailingSlashCount === 0 && brokenRefs.size === 0)
                 continue;
 
-            console.log(`${path}:`);
+            console.error(`${path}:`);
             printWarnings(trailingSlashCount, brokenRefs, '  ');
-            console.log();
+            console.error();
         }
 }
 
