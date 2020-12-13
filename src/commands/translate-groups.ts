@@ -33,12 +33,10 @@ type Translator = (
     teamPath: string,
 ) => void;
 
-function lowerCaseFirst(string: string) {
-    return string.charAt(0).toLowerCase() + string.slice(1);
-}
-
 function upperCaseFirst(string: string) {
-    return string.charAt(0).toUpperCase() + string.slice(1);
+    return string.startsWith('osu!')
+        ? string
+        : string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 function flattenObject<T>(object: DeepDictionary<T>, prefix = '') {
@@ -77,14 +75,11 @@ function spLanguageReplacer(englishInfo: GroupYaml, getString: (key: string) => 
     return (spLanguagesString: string) => {
         const englishSpLanguages = spLanguagesString.split(englishInfo.separator);
         const spLanguages: string[] = [];
-        const pushLanguage = (language: string) => {
-            spLanguages.push(spLanguages.length > 0 ? language : upperCaseFirst(language));
-        };
 
         for (const spLanguage of englishSpLanguages) {
             let key = getKey(englishInfo, spLanguage, 'languages');
             if (key !== undefined) {
-                pushLanguage(getString(key)!);
+                spLanguages.push(getString(key)!);
                 continue;
             }
 
@@ -95,10 +90,10 @@ function spLanguageReplacer(englishInfo: GroupYaml, getString: (key: string) => 
 
             let newLanguage = getString(getKey(englishInfo, partialMatch[1], 'languages')!)!;
             newLanguage = getString('languages.partial')!.replace('<language>', newLanguage);
-            pushLanguage(newLanguage);
+            spLanguages.push(newLanguage);
         }
 
-        return spLanguages.join(getString('separator'));
+        return upperCaseFirst(spLanguages.join(getString('separator')));
     }
 }
 
@@ -159,17 +154,19 @@ const updateGmtTranslation: Translator = function (englishInfo, englishGmt, getS
     const table = englishGmt.match(/\| :-- \| :-- \| :-- \|\n((?:\|.+\n)+)/)![1]
         .replace(/(?<=^\|.+?\| ).+(?= \|.+?\|$)/gm, spLanguageReplacer(englishInfo, getString))
         .replace(/(?<=^\|.+?\|.+?\| ).+(?= \|$)/gm, areasString =>
-            areasString
-                .split(englishInfo.separator)
-                .map((area, idx) => {
-                    const key = getKey(englishInfo, area, 'gmt.areas');
+            upperCaseFirst(
+                areasString
+                    .split(englishInfo.separator)
+                    .map((area) => {
+                        const key = getKey(englishInfo, area, 'gmt.areas');
 
-                    if (key === undefined)
-                        throw `Key not found for ${area}`;
+                        if (key === undefined)
+                            throw `Key not found for ${area}`;
 
-                    return idx > 0 ? lowerCaseFirst(getString(key)!) : getString(key);
-                })
-                .join(getString('separator'))
+                        return getString(key);
+                    })
+                    .join(getString('separator'))
+            )
         );
 
     // "REMOVE_ME" is a hacky way to step through tables in the
@@ -178,7 +175,7 @@ const updateGmtTranslation: Translator = function (englishInfo, englishGmt, getS
     gmt.content = gmt.content.replace(/(?<=\| :-- \| :-- \| :-- \|\n)(?:\|.+\n)+/, `REMOVE_ME${table}`);
 
     const table2 = englishGmt.match(/\| :-- \| :-- \| :-- \|\n(?:.|\n)+?\| :-- \| :-- \| :-- \|\n((?:\|.+\n)+)/)![1]
-        .replace(`| *${englishInfo.gmt.all_mods}* |`, `| *${getString('gmt.all_mods')}* |`);
+        .replace(`| *${upperCaseFirst(englishInfo.gmt.all_mods)}* |`, `| *${upperCaseFirst(getString('gmt.all_mods')!)}* |`);
 
     gmt.content = gmt.content.replace(/(?<=\| :-- \| :-- \| :-- \|\n)(?:\|.+\n)+/, table2);
     gmt.content = gmt.content.replace(/REMOVE_ME/g, '');
@@ -206,17 +203,19 @@ const updateNatTranslation: Translator = function (englishInfo, englishNat, getS
 
         table = table.replace(/(?<=^\|.+?\| ).+(?= \|.+?\|$)/gm, spLanguageReplacer(englishInfo, getString));
         table = table.replace(/(?<=^\|.+?\|.+?\| ).+(?= \|$)/gm, areasString =>
-            areasString
-                .split(englishInfo.separator)
-                .map(area => {
-                    const key = getKey(englishInfo, area, 'nat.areas');
+            upperCaseFirst(
+                areasString
+                    .split(englishInfo.separator)
+                    .map(area => {
+                        const key = getKey(englishInfo, area, 'nat.areas');
 
-                    if (key === undefined)
-                        throw `Key not found for ${area}`;
+                        if (key === undefined)
+                            throw `Key not found for ${area}`;
 
-                    return getString(key);
-                })
-                .join(getString('separator'))
+                        return getString(key);
+                    })
+                    .join(getString('separator'))
+            )
         );
 
         // "REMOVE_ME" is a hacky way to step through tables in the
@@ -247,13 +246,23 @@ const updateAluTranslation: Translator = function (englishInfo, englishAlu, getS
 
     const table = englishAlu.match(/\| :-- \| :-- \|\n((?:\|.+\n)+)/)![1]
         .replace(/(?<=^\|.+?\| ).+(?= \|$)/gm, rolesString =>
-            rolesString
-                .split(englishInfo.separator)
-                .map(role => {
-                    const key = getKey(englishInfo, role, 'alumni.roles');
-                    return key === undefined ? role : getString(key);
-                })
-                .join(getString('separator'))
+            upperCaseFirst(
+                rolesString
+                    .split(englishInfo.separator)
+                    .map((role) => {
+                        const key = getKey(englishInfo, role, 'alumni.roles');
+
+                        if (key === undefined) {
+                            if (role === role.toUpperCase())
+                                return role;
+
+                            throw `Key not found for ${role}`;
+                        }
+
+                        return getString(key);
+                    })
+                    .join(getString('separator'))
+            )
         );
 
     alu.content = alu.content.replace(/(?<=\| :-- \| :-- \|\n)(?:\|.+\n)+/, table);
