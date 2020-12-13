@@ -2,7 +2,7 @@ import { execFileSync } from 'child_process';
 import { Command } from 'commander';
 import { existsSync } from 'fs';
 import { join } from 'path';
-import { warning } from '../console';
+import { error, warning } from '../console';
 import { git } from '../git';
 import { wikiPath } from '../wiki';
 
@@ -25,7 +25,13 @@ async function lint(paths: string[]): Promise<void> {
                 '--others',
                 '-z',
             ])).split('\0'),
-        ])];
+        ])]
+            .filter((path) => path.length > 0);
+
+        if (paths.length === 0) {
+            console.error('No changes since `master`');
+            process.exit();
+        }
 
         execFileSync(process.argv[0], [
             process.argv[1],
