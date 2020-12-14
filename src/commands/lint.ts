@@ -2,7 +2,7 @@ import { execFileSync } from 'child_process';
 import { Command } from 'commander';
 import { existsSync } from 'fs';
 import { join } from 'path';
-import { error, warning } from '../console';
+import { warning } from '../console';
 import { git } from '../git';
 import { wikiPath } from '../wiki';
 
