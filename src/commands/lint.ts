@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { existsSync } from 'fs';
 import { join } from 'path';
-import { error, warning } from '../console';
+import { error, info, success, warning } from '../console';
 import { git } from '../git';
 import { run } from '../process';
 import { wikiPath } from '../wiki';
@@ -41,13 +41,15 @@ export async function lint(paths: string[]): Promise<void> {
             .filter((path) => path.length > 0);
 
         if (paths.length === 0) {
-            console.error('No changes since `master`');
-            process.exit();
+            success('No changes since `master`', true);
         }
 
+        info('find-redundant-redirects:');
         await sandbox(findRedundantRedirects);
+        info('');
     }
 
+    info('find-broken-refs:');
     await sandbox(() => findBrokenRefs(paths, {
         aggregate: false,
         allowRedirects: false,
@@ -55,6 +57,8 @@ export async function lint(paths: string[]): Promise<void> {
     }));
 
     const remarkPath = join(wikiPath, 'node_modules/.bin/remark');
+
+    info('\nRemark:');
 
     if (existsSync(remarkPath)) {
         await sandbox(() => run(remarkPath, [
