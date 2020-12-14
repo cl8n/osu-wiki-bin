@@ -45,7 +45,7 @@ async function replaceInFile(path: string, flag: boolean) {
         await writeFile(path, content);
 }
 
-async function replace(paths: string[], options: ReplaceOptions) {
+export async function replace(paths: string[], options: ReplaceOptions) {
     if (paths.length === 0)
         paths.push('.');
 

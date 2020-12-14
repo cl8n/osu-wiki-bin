@@ -295,7 +295,7 @@ const updateSupTranslation: Translator = function (englishInfo, englishSup, getS
     updateFlags(supFilename);
 }
 
-function translateGroups(options: TranslateGroupsOptions) {
+export function translateGroups(options: TranslateGroupsOptions) {
     const metaPath = join(wikiPath, 'meta/group-info');
     const teamPath = join(wikiPath, 'wiki/People/The_Team');
     const englishInfo = yaml(readFileSync(join(metaPath, 'en.yaml'), 'utf8')) as GroupYaml;

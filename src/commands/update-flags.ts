@@ -33,7 +33,7 @@ function fixFlagRefs(content: string, flagNames: { [key: string]: string }) {
     return replaceLineEndings(content, normalizedEndings.originalEnding).content;
 }
 
-async function updateFlags(paths: string[]) {
+export async function updateFlags(paths: string[]) {
     if (paths.length === 0)
         paths.push('.');
 

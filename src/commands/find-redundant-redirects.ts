@@ -27,7 +27,7 @@ function isRedirect(path: string) {
     return getRedirects()[path.toLowerCase()] !== undefined;
 }
 
-function findRedundantRedirects() {
+export function findRedundantRedirects() {
     for (const [source, target] of (Object.entries(getRedirects()) as [string, string][])) {
         if (wikiDirectoryExists(source) || isRedirect(target)) {
             errorX(source);

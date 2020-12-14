@@ -7,7 +7,7 @@ import { git } from '../git';
 import { wikiPath } from '../wiki';
 
 // TODO: should call functions directly instead of running commands
-async function lint(paths: string[]): Promise<void> {
+export async function lint(paths: string[]): Promise<void> {
     if (paths.length === 0) {
         paths = [...new Set([
             ...(await git([

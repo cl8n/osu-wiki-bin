@@ -95,7 +95,7 @@ function printWarnings(trailingSlashCount: number, brokenRefs: Set<string>, pref
             errorX(`${prefix}${ref}`);
 }
 
-async function findBrokenRefs(paths: string[], options: FindBrokenRefsOptions) {
+export async function findBrokenRefs(paths: string[], options: FindBrokenRefsOptions) {
     if (paths.length === 0)
         paths.push('.');
 

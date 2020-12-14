@@ -30,7 +30,7 @@ function sortListsInPath(path: string) {
     writeFileSync(path, lines.join('\n'));
 }
 
-async function sortLists(paths: string[]) {
+export async function sortLists(paths: string[]) {
     if (paths.length === 0)
         paths.push('.');
 

@@ -7,7 +7,7 @@ import { scrapeUser } from '../web';
 import { errorX } from '../console';
 
 // TODO: would be nice to also check titles missing from the article, but this isn't possible with web api yet
-async function checkUserTitles() {
+export async function checkUserTitles() {
     const file = join(wikiPath, 'wiki/People/Users_with_unique_titles/en.md');
     const content = (await readFile(file, 'utf8')).split('## By name')[1];
 
