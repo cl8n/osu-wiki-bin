@@ -8,14 +8,14 @@ import { wikiPath } from '../wiki';
 import { findBrokenRefs } from './find-broken-refs';
 import { findRedundantRedirects } from './find-redundant-redirects';
 
-async function sandbox(name: string, action: () => Promise<void> | void): Promise<void> {
+async function sandbox(action: () => Promise<void> | void): Promise<void> {
     try {
         const result = action();
 
         if (result != null)
             await result;
     } catch (e) {
-        error(`${name}: ${e.message}`);
+        error(e.message);
     }
 }
 
@@ -45,10 +45,10 @@ export async function lint(paths: string[]): Promise<void> {
             process.exit();
         }
 
-        await sandbox('find-redundant-redirects', findRedundantRedirects);
+        await sandbox(findRedundantRedirects);
     }
 
-    await sandbox('find-broken-refs', () => findBrokenRefs(paths, {
+    await sandbox(() => findBrokenRefs(paths, {
         aggregate: false,
         allowRedirects: false,
         excludeOutdated: false,
@@ -57,7 +57,7 @@ export async function lint(paths: string[]): Promise<void> {
     const remarkPath = join(wikiPath, 'node_modules/.bin/remark');
 
     if (existsSync(remarkPath)) {
-        await sandbox('remark', () => run(remarkPath, [
+        await sandbox(() => run(remarkPath, [
             '--frail',
             '--no-stdout',
             '--quiet',
