@@ -1,12 +1,24 @@
-import { execFileSync } from 'child_process';
 import { Command } from 'commander';
 import { existsSync } from 'fs';
 import { join } from 'path';
-import { warning } from '../console';
+import { error, warning } from '../console';
 import { git } from '../git';
+import { run } from '../process';
 import { wikiPath } from '../wiki';
+import { findBrokenRefs } from './find-broken-refs';
+import { findRedundantRedirects } from './find-redundant-redirects';
 
-// TODO: should call functions directly instead of running commands
+async function sandbox(name: string, action: () => Promise<void> | void): Promise<void> {
+    try {
+        const result = action();
+
+        if (result != null)
+            await result;
+    } catch (e) {
+        error(`${name}: ${e.message}`);
+    }
+}
+
 export async function lint(paths: string[]): Promise<void> {
     if (paths.length === 0) {
         paths = [...new Set([
@@ -33,28 +45,25 @@ export async function lint(paths: string[]): Promise<void> {
             process.exit();
         }
 
-        execFileSync(process.argv[0], [
-            process.argv[1],
-            'find-redundant-redirects',
-        ]);
+        await sandbox('find-redundant-redirects', findRedundantRedirects);
     }
 
-    execFileSync(process.argv[0], [
-        process.argv[1],
-        'find-broken-refs',
-        ...paths,
-    ]);
+    await sandbox('find-broken-refs', () => findBrokenRefs(paths, {
+        aggregate: false,
+        allowRedirects: false,
+        excludeOutdated: false,
+    }));
 
     const remarkPath = join(wikiPath, 'node_modules/.bin/remark');
 
     if (existsSync(remarkPath)) {
-        execFileSync(remarkPath, [
+        await sandbox('remark', () => run(remarkPath, [
             '--frail',
             '--no-stdout',
             '--quiet',
             '--silently-ignore',
             ...paths,
-        ], { cwd: wikiPath });
+        ], wikiPath));
     } else {
         warning('Remark is not installed in osu-wiki. Run `npm install`.');
     }
