@@ -36,6 +36,7 @@ export async function lint(paths: string[]): Promise<void> {
                 '--exclude-standard',
                 '--others',
                 '-z',
+                '*.md',
             ])).split('\0'),
         ])]
             .filter((path) => path.length > 0);
