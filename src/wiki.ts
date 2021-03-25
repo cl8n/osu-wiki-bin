@@ -1,6 +1,6 @@
 import type { Dictionary, Empty } from '@cl8n/types';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
-import { safeLoad as yaml } from 'js-yaml';
+import { load as yaml } from 'js-yaml';
 import { join } from 'path';
 import { warning } from './console';
 

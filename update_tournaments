@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const { readdirSync, readFileSync, writeFileSync } = require('fs');
-const { safeLoad: yaml } = require('js-yaml');
+const { load: yaml } = require('js-yaml');
 const { join } = require('path');
 const { nestedProperty } = require('./include');
 

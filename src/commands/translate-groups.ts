@@ -1,7 +1,7 @@
 import { DeepDictionary, Dictionary } from '@cl8n/types';
 import { Command } from 'commander';
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'fs';
-import { safeLoad as yaml } from 'js-yaml';
+import { load as yaml } from 'js-yaml';
 import { join } from 'path';
 import { warning } from '../console';
 import { replaceLineEndings } from '../text';
