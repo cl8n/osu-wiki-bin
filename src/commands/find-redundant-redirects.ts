@@ -12,7 +12,7 @@ function wikiDirectoryExists(path: string) {
 
     for (const pathPart of pathParts) {
         const dirEnts = readdirSync(currentDir, { withFileTypes: true });
-        const dirEnt = dirEnts.find(d => d.isDirectory && d.name.toLowerCase() === pathPart.toLowerCase());
+        const dirEnt = dirEnts.find(d => d.isDirectory() && d.name.toLowerCase() === pathPart.toLowerCase());
 
         if (dirEnt === undefined)
             return false;
