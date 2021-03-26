@@ -1,4 +1,3 @@
-import { DeepDictionary, Dictionary } from '@cl8n/types';
 import { Command } from 'commander';
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'fs';
 import { load as yaml } from 'js-yaml';
@@ -6,7 +5,7 @@ import { join } from 'path';
 import { warning } from '../console';
 import { replaceLineEndings } from '../text';
 import { wikiPath } from '../wiki';
-import { nestedProperty } from '../deep';
+import { getKey, NestedKeyFor, nestedProperty } from '../deep';
 import { updateFlags } from './update-flags';
 
 // TODO whole thing is so shit
@@ -16,19 +15,28 @@ interface TranslateGroupsOptions {
     group?: string[];
 }
 
-type GroupYaml = DeepDictionary<string> & {
+type GroupYaml = {
     outdated: boolean;
     separator: string;
-
-    gmt: DeepDictionary<string> & {
-        all_mods: string;
+    alumni: {
+        roles: Record<string, string>;
     };
+    gmt: {
+        all_mods: string;
+        areas: Record<string, string>;
+    };
+    nat: {
+        areas: Record<string, string>;
+    };
+    languages: Record<string, string>;
 };
+
+type GroupYamlGetString = (key: NestedKeyFor<GroupYaml, string>) => string;
 
 type Translator = (
     enInfo: GroupYaml,
     en: string,
-    getString: (key: string) => string | undefined,
+    getString: GroupYamlGetString,
     language: string,
     teamPath: string,
 ) => void;
@@ -39,57 +47,34 @@ function upperCaseFirst(string: string) {
         : string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-function flattenObject<T>(object: DeepDictionary<T>, prefix = '') {
-    function isDictionary(object: T | DeepDictionary<T> | undefined): object is DeepDictionary<T> {
-        return typeof object === 'object' && object != null;
-    }
-
-    const flattened: Dictionary<T> = {};
-
-    if (prefix !== '')
-        prefix += '.';
-
-    for (const key of Object.keys(object)) {
-        const value = object[key];
-
-        if (isDictionary(value))
-            Object.assign(flattened, flattenObject(value, prefix + key));
-        else
-            flattened[prefix + key] = value;
-    }
-
-    return flattened;
-}
-
-function getKey(object: DeepDictionary<string>, value: string, scope: string) {
-    const keySearch = (Object.entries(flattenObject(object)) as [string, string][])
-        .find(([k, v]) =>
-            (scope === undefined || k.startsWith(scope)) &&
-            v.toLowerCase() === value.toLowerCase()
-        );
-
-    return keySearch && keySearch[0];
-}
-
-function spLanguageReplacer(englishInfo: GroupYaml, getString: (key: string) => string | undefined) {
+function spLanguageReplacer(englishInfo: GroupYaml, getString: GroupYamlGetString) {
     return (spLanguagesString: string) => {
         const englishSpLanguages = spLanguagesString.split(englishInfo.separator);
         const spLanguages: string[] = [];
 
         for (const spLanguage of englishSpLanguages) {
             let key = getKey(englishInfo, spLanguage, 'languages');
-            if (key !== undefined) {
-                spLanguages.push(getString(key)!);
+            if (key != null) {
+                spLanguages.push(getString(key));
                 continue;
             }
 
             const partialRegex = new RegExp(`^${nestedProperty(englishInfo, 'languages.partial').replace('<language>', '(.+)')}$`, 'i');
             const partialMatch = spLanguage.match(partialRegex);
-            if (partialMatch === null)
-                throw `Key not found for ${spLanguage}`;
 
-            let newLanguage = getString(getKey(englishInfo, partialMatch[1], 'languages')!)!;
-            newLanguage = getString('languages.partial')!.replace('<language>', newLanguage);
+            if (
+                partialMatch == null ||
+                (key = getKey(englishInfo, partialMatch[1], 'languages')) == null
+            ) {
+                // For VINXIS in https://github.com/ppy/osu-wiki/pull/5068
+                if (spLanguage.toLowerCase() !== 'some english')
+                    warning(`Language key not found for "${spLanguage}"`);
+
+                continue;
+            }
+
+            let newLanguage = getString(key);
+            newLanguage = getString('languages.partial').replace('<language>', newLanguage);
             spLanguages.push(newLanguage);
         }
 
@@ -166,7 +151,7 @@ const updateGmtTranslation: Translator = function (englishInfo, englishGmt, getS
     gmt.content = gmt.content.replace(/(?<=\| :-- \| :-- \| :-- \|\n)(?:\|.+\n)+/, `REMOVE_ME${table}`);
 
     const table2 = englishGmt.match(/\| :-- \| :-- \| :-- \|\n(?:.|\n)+?\| :-- \| :-- \| :-- \|\n((?:\|.+\n)+)/)![1]
-        .replace(`| *${upperCaseFirst(englishInfo.gmt.all_mods)}* |`, `| *${upperCaseFirst(getString('gmt.all_mods')!)}* |`);
+        .replace(`| *${upperCaseFirst(englishInfo.gmt.all_mods)}* |`, `| *${upperCaseFirst(getString('gmt.all_mods'))}* |`);
 
     gmt.content = gmt.content.replace(/(?<=\| :-- \| :-- \| :-- \|\n)(?:\|.+\n)+/, table2);
     gmt.content = gmt.content.replace(/REMOVE_ME/g, '');
@@ -314,13 +299,13 @@ export function translateGroups(options: TranslateGroupsOptions) {
         if (groupInfoFilename === 'en.yaml')
             continue;
 
-        const groupInfo = yaml(readFileSync(join(metaPath, groupInfoFilename), 'utf8')) as GroupYaml;
+        const groupInfo = yaml(readFileSync(join(metaPath, groupInfoFilename), 'utf8')) as Partial<GroupYaml>;
 
         if (groupInfo.outdated)
             continue;
 
         const language = groupInfoFilename.replace(/\.yaml$/, '');
-        const getString: (key: string) => string | undefined =
+        const getString: GroupYamlGetString =
             (key) => nestedProperty(groupInfo, key) || nestedProperty(englishInfo, key);
 
         if (checkGroups.alu)
