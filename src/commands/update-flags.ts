@@ -6,7 +6,7 @@ import { wikiPath } from '../wiki';
 import { getFiles } from '../files';
 
 function fixFlagRefs(content: string, flagNames: { [key: string]: string }) {
-    if (content.match(/!\[[A-Z_]*\]\[flag_([A-Z_]+)\]/) === null)
+    if (content.match(/!\[[A-Z_]*\]\[flag_([A-Z_]+)\]/) == null)
         return content;
 
     const normalizedEndings = replaceLineEndings(content);
@@ -24,7 +24,7 @@ function fixFlagRefs(content: string, flagNames: { [key: string]: string }) {
     for (const flag of [...flags].sort()) {
         content += `[flag_${flag}]: /wiki/shared/flag/${flag}.gif`;
 
-        if (flagNames[flag] !== undefined)
+        if (flagNames[flag] != null)
             content += ` "${flagNames[flag]}"`;
 
         content += '\n';
@@ -41,10 +41,10 @@ export async function updateFlags(paths: string[]) {
 
     for (const path of await getFiles(paths, 'md')) {
         const localeMatch = path.match(/[a-z-]+\.md$/);
-        const locale = localeMatch === null ? 'en.md' : localeMatch[0];
+        const locale = localeMatch == null ? 'en.md' : localeMatch[0];
         let flagNames = flagNamesByLocale[locale];
 
-        if (flagNames === undefined) {
+        if (flagNames == null) {
             flagNames = {};
 
             try {

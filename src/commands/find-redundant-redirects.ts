@@ -14,7 +14,7 @@ function wikiDirectoryExists(path: string) {
         const dirEnts = readdirSync(currentDir, { withFileTypes: true });
         const dirEnt = dirEnts.find(d => d.isDirectory() && d.name.toLowerCase() === pathPart.toLowerCase());
 
-        if (dirEnt === undefined)
+        if (dirEnt == null)
             return false;
         else
             currentDir = join(currentDir, dirEnt.name);
@@ -24,7 +24,7 @@ function wikiDirectoryExists(path: string) {
 }
 
 function isRedirect(path: string) {
-    return getRedirects()[path.toLowerCase()] !== undefined;
+    return getRedirects()[path.toLowerCase()] != null;
 }
 
 export function findRedundantRedirects() {

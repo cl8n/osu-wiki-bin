@@ -28,7 +28,7 @@ async function replaceInFile(path: string, flag: boolean) {
         }
 
     for (const match of content.matchAll(/u#(\d+)|u!(.+?)!u/g)) {
-        const byName = match[1] === undefined;
+        const byName = match[1] == null;
         const id = match[byName ? 2 : 1];
 
         try {

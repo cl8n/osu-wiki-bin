@@ -106,7 +106,7 @@ const updateBnTranslation: Translator = function (englishInfo, englishBn, getStr
     const bn = replaceLineEndings(readFileSync(bnFilename, 'utf8'));
     const tableHeadersMatch = bn.content.match(/^\| :-- \| :-- \|$/gm);
 
-    if (tableHeadersMatch === null || tableHeadersMatch.length !== 8) {
+    if (tableHeadersMatch == null || tableHeadersMatch.length !== 8) {
         warning(`${language} BN page formatting is too old, skipping`);
         return;
     }
@@ -137,7 +137,7 @@ const updateGmtTranslation: Translator = function (englishInfo, englishGmt, getS
     const gmt = replaceLineEndings(readFileSync(gmtFilename, 'utf8'));
     const tableHeadersMatch = gmt.content.match(/^\| :-- \| :-- \| :-- \|$/gm);
 
-    if (tableHeadersMatch === null || tableHeadersMatch.length !== 2) {
+    if (tableHeadersMatch == null || tableHeadersMatch.length !== 2) {
         warning(`${language} GMT page formatting is too old, skipping`);
         return;
     }
@@ -151,7 +151,7 @@ const updateGmtTranslation: Translator = function (englishInfo, englishGmt, getS
                     .map((area) => {
                         const key = getKey(englishInfo, area, 'gmt.areas');
 
-                        if (key === undefined)
+                        if (key == null)
                             throw `Key not found for ${area}`;
 
                         return getString(key);
@@ -184,7 +184,7 @@ const updateNatTranslation: Translator = function (englishInfo, englishNat, getS
     const nat = replaceLineEndings(readFileSync(natFilename, 'utf8'));
     const tableHeadersMatch = nat.content.match(/^\| :-- \| :-- \| :-- \|$/gm);
 
-    if (tableHeadersMatch === null || tableHeadersMatch.length !== 4) {
+    if (tableHeadersMatch == null || tableHeadersMatch.length !== 4) {
         warning(`${language} NAT page formatting is too old, skipping`);
         return;
     }
@@ -200,7 +200,7 @@ const updateNatTranslation: Translator = function (englishInfo, englishNat, getS
                     .map(area => {
                         const key = getKey(englishInfo, area, 'nat.areas');
 
-                        if (key === undefined)
+                        if (key == null)
                             throw `Key not found for ${area}`;
 
                         return getString(key);
@@ -230,7 +230,7 @@ const updateAluTranslation: Translator = function (englishInfo, englishAlu, getS
     const alu = replaceLineEndings(readFileSync(aluFilename, 'utf8'));
     const tableHeadersMatch = alu.content.match(/^\| :-- \| :-- \|$/gm);
 
-    if (tableHeadersMatch === null || tableHeadersMatch.length !== 1) {
+    if (tableHeadersMatch == null || tableHeadersMatch.length !== 1) {
         warning(`${language} osu! Alumni page formatting is too old, skipping`);
         return;
     }
@@ -243,7 +243,7 @@ const updateAluTranslation: Translator = function (englishInfo, englishAlu, getS
                     .map((role) => {
                         const key = getKey(englishInfo, role, 'alumni.roles');
 
-                        if (key === undefined) {
+                        if (key == null) {
                             if (role === role.toUpperCase())
                                 return role;
 
@@ -271,7 +271,7 @@ const updateSupTranslation: Translator = function (englishInfo, englishSup, getS
     const sup = replaceLineEndings(readFileSync(supFilename, 'utf8'));
     const tableHeadersMatch = sup.content.match(/^\| :-- \| :-- \|$/gm);
 
-    if (tableHeadersMatch === null || tableHeadersMatch.length !== 1) {
+    if (tableHeadersMatch == null || tableHeadersMatch.length !== 1) {
         warning(`${language} Support Team page formatting is too old, skipping`);
         return;
     }

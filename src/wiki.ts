@@ -23,7 +23,7 @@ export function loadConfig() {
         _config = JSON.parse(readFileSync(configPath, 'utf8')) as OsuWikiConfig;
     } else {
         _config = blankConfig;
-        writeFileSync(configPath, JSON.stringify(blankConfig, undefined, 2) + '\n');
+        writeFileSync(configPath, JSON.stringify(blankConfig, null, 2) + '\n');
         warning(`No config options set. Some commands won't work without an API key.\nSee ${configPath}`);
     }
 }
@@ -80,7 +80,7 @@ export function loadGroup(group: string, locale: string = 'en'): string {
 
 let redirects: Dictionary<string> | undefined;
 export function getRedirects(): Dictionary<string> {
-    if (redirects === undefined) {
+    if (redirects == null) {
         const contents = readFileSync(join(wikiPath, `wiki/redirect.yaml`), 'utf8');
         redirects = yaml(contents) as Dictionary<string>;
     }

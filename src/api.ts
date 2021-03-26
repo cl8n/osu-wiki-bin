@@ -52,7 +52,7 @@ export async function userLink(userId: string, options?: UserLinkOptions | UserL
     };
 
     const cachedUser = filledOptions.byName ? usersByName[userId] : usersById[userId];
-    const user = cachedUser !== undefined
+    const user = cachedUser != null
         ? cachedUser
         : await osuApi('get_user', {
             type: filledOptions.byName ? 'string' : 'id',
@@ -67,7 +67,7 @@ export async function userLink(userId: string, options?: UserLinkOptions | UserL
         user.push(nullUser);
     }
 
-    if (user[0].country === null || user[0].country === '' || user[0].country === 'XX')
+    if (user[0].country == null || user[0].country === '' || user[0].country === 'XX')
         user[0].country = '__';
 
     usersById[user[0].user_id] = user;

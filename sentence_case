@@ -266,7 +266,7 @@ console.log('| :-- | :-- | :-- |');
 for (const article of Object.entries(articleInfo()).sort(sortArticles)) {
     const oldFullPath = join(wikiDir, article[0]);
     const newTitle = article[1][0];
-    const newBasePath = article[1][1] !== undefined ? article[1][1] : newTitle.replace(/ /g, '_');
+    const newBasePath = article[1][1] != null ? article[1][1] : newTitle.replace(/ /g, '_');
     const newFullPath = join(oldFullPath, '..', newBasePath);
 
     // Fix title in English article

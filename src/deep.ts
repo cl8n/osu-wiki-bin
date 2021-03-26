@@ -5,7 +5,7 @@ export function nestedProperty(object: DeepDictionary<unknown>, property: string
     const keys = property.split('.');
     let value: any = object;
 
-    for (let i = 0; i < keys.length && value !== undefined; i++)
+    for (let i = 0; i < keys.length && value != null; i++)
         value = value[keys[i]];
 
     return value;

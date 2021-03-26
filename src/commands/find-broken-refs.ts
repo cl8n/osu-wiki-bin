@@ -37,7 +37,7 @@ function findBrokenRefsForPath(path: string, allowRedirects: boolean, excludeOut
         if (ref !== '' && !existsSync(realRef)) {
             if (!allowRedirects ||
                 !ref.startsWith('/wiki/') ||
-                getRedirects()[ref.replace('/wiki/', '').toLowerCase()] === undefined
+                getRedirects()[ref.replace('/wiki/', '').toLowerCase()] == null
             )
                 brokenRefs.add(ref);
 
@@ -70,7 +70,7 @@ function findBrokenRefsForPath(path: string, allowRedirects: boolean, excludeOut
                     .replace(/\[(.+?)\]\(.+?\)/g, '$1')
                     .replace(/ /g, '-');
 
-                if (sectionSlugLevels[slug] === undefined)
+                if (sectionSlugLevels[slug] == null)
                     sectionSlugLevels[slug] = 0;
                 else
                     slug += `.${++sectionSlugLevels[slug]}`;

@@ -11,7 +11,7 @@ function sortListsInPath(path: string) {
     for (let i = 0; i < lines.length; ++i) {
         const match = lines[i].match(/^[-|] !\[\]\[flag_..\] \[(.+?)\]\(https.+$/);
         if (match !== null) {
-            if (currentListStart === null)
+            if (currentListStart == null)
                 currentListStart = i;
 
             currentList.push([match[1], match[0]]);

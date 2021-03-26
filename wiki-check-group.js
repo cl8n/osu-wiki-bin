@@ -9,7 +9,7 @@ async function run(options) {
         bng: 'Beatmap_Nominators'
     }[options.group];
 
-    if (groupFolder === undefined) {
+    if (groupFolder == null) {
         console.error(`Invalid group. Available options are ${Object.keys(groupFolder).join(', ')}.`);
         return;
     }
