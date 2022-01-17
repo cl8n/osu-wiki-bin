@@ -1,9 +1,11 @@
 import { Command } from 'commander';
-import { existsSync, readFileSync } from 'fs';
+import { existsSync } from 'fs';
+import { load as yaml } from 'js-yaml';
 import { basename, dirname, join } from 'path';
 import { getFiles } from '../files';
 import { getRedirects, wikiPath } from '../wiki';
-import { errorX, warningX } from '../console';
+import { error, errorX, warningX } from '../console';
+import { getImports, getMdAst } from '../remark';
 
 interface FindBrokenRefsOptions {
     aggregate: boolean;
@@ -11,75 +13,196 @@ interface FindBrokenRefsOptions {
     excludeOutdated: boolean;
 }
 
-function findBrokenRefsForPath(path: string, allowRedirects: boolean, excludeOutdated: boolean): [number, Set<string>] {
-    const file = readFileSync(path, 'utf8');
-    let trailingSlashCount = 0;
-    const brokenRefs: Set<string> = new Set();
-    const aTagSlugs = file.match(/(?<=<a.+?id=").+?(?=".*?>.*?<\/a>)/g) || [];
+function urlsFromNode(node: any): string[] | undefined {
+    switch (node.type) {
+        case 'definition':
+        case 'image':
+        case 'link':
+            if (!node.url)
+                return;
 
-    if (excludeOutdated && path.endsWith('.md') && !path.endsWith('en.md') && file.match(/^outdated: true$/m) !== null)
-        return [trailingSlashCount, brokenRefs];
+            return [node.url];
+        case 'html':
+            if (!node.value)
+                return;
 
-    for (const match of file.matchAll(/\[.*?\]\((\S+(?:#\S*)?)(?: ".+?")?\)|^\[.*?\]: (\S+(?:#\S*)?)(?: ".+?")?$/gm)) {
-        const [ref, section] = (match[1] || match[2]).split('#');
+            const matches = node.value.matchAll(/<a[^>]*\s+href=(['"])([^\1]*)\1[^>]*>/gi);
+            const urls = [];
 
-        if (ref.match(/^[a-z]+:\/\/|^mailto:/) !== null)
-            continue;
+            for (const match of matches)
+                urls.push(match[2]);
 
-        if (ref.endsWith('/'))
-            ++trailingSlashCount;
+            return urls;
+    }
+}
 
-        let refExists = true;
-        const realRef = ref.startsWith('/')
-            ? join(wikiPath, ref)
-            : join(dirname(path), ref);
+const pathExistences: Record<string, boolean> = {};
+function cachedExistsSync(path: string): boolean {
+    if (pathExistences[path] != null) {
+        return pathExistences[path];
+    }
 
-        if (ref !== '' && !existsSync(realRef)) {
-            if (!allowRedirects ||
-                !ref.startsWith('/wiki/') ||
-                getRedirects()[ref.replace('/wiki/', '').toLowerCase()] == null
-            )
-                brokenRefs.add(ref);
+    return pathExistences[path] = existsSync(path);
+}
 
-            refExists = false;
+const slugsByMdPath: Record<string, string[]> = {};
+async function getSlugs(mdPath: string): Promise<string[]> {
+    if (slugsByMdPath[mdPath] != null) {
+        return slugsByMdPath[mdPath];
+    }
+
+    const visit = (await getImports())['unist-util-visit'].default;
+
+    const mdAst = await getMdAst(mdPath);
+    const sectionSlugLevels: Record<string, number> = {};
+    const slugs: string[] = [];
+
+    visit(mdAst, ['heading', 'html'], (node: any) => {
+        if (node.type === 'html') {
+            // TODO: Use rehype to parse this (and other HTML)
+            const anchors = node.value.match(/(?<=<a(?=\s)[^>]*?\sid=")[^"]+(?="[^>]*>)/g);
+
+            if (anchors != null) {
+                slugs.push(...anchors);
+            }
+
+            return;
         }
 
-        if (section) {
+        let headingText = '';
+
+        visit(node, ['text'], (node: any) => {
+            headingText += node.value;
+        });
+
+        // TODO: When the attributes syntax is supported by the parser,
+        // use (e.g.) `node.id` for `slug` if it exists. For now, we try
+        // to parse the attribute syntax ourselves here.
+        const attributeMatch = headingText.match(/\{#([^\s}]+)\}\s*$/);
+        let slug = attributeMatch != null
+            ? attributeMatch[1]
+            : headingText.trim().toLowerCase().replace(/ /g, '-');
+
+        if (sectionSlugLevels[slug] == null) {
+            sectionSlugLevels[slug] = 0;
+        } else {
+            slug += `.${++sectionSlugLevels[slug]}`;
+        }
+
+        slugs.push(slug);
+    });
+
+    return slugsByMdPath[mdPath] = slugs;
+}
+
+async function findBrokenRefsForPath(path: string, allowRedirects: boolean, excludeOutdated: boolean): Promise<[number, Set<string>]> {
+    const mdAst = await getMdAst(path);
+    const visit = (await getImports())['unist-util-visit'].default;
+
+    if (excludeOutdated && !path.endsWith('en.md')) {
+        let skip = false;
+
+        visit(mdAst, ['yaml'], (node: { value: string; }) => {
+            if ((yaml(node.value) as Record<string, unknown>).outdated) {
+                skip = true;
+                return false;
+            }
+        });
+
+        if (skip) {
+            return [0, new Set()];
+        }
+    }
+
+    const urls: string[] = [];
+
+    visit(mdAst, ['definition', 'html', 'image', 'link'], (node: any) => {
+        const nodeUrls = urlsFromNode(node);
+
+        if (nodeUrls) {
+            urls.push(...nodeUrls);
+        }
+    });
+
+    const brokenRefs: Set<string> = new Set();
+    const defaultLocaleBasename = basename(path);
+    let trailingSlashCount = 0;
+
+    for (const url of urls) {
+        if (url.match(/^[a-z]+:\/\/|^mailto:/) != null) {
+            continue;
+        }
+
+        if (url.match(/#[^#]*#/) != null) {
+            error(`Invalid URL: ${url}`);
+            continue;
+        }
+
+        let [ref, fragment] = url.split('#');
+        let localeBasename = defaultLocaleBasename;
+
+        if (ref.includes('?')) {
+            const localeMatch = ref.match(/\?locale=([a-z-]{1,5})/);
+            if (localeMatch != null) {
+                localeBasename = `${localeMatch[1]}.md`;
+            }
+
+            ref = ref.substring(0, ref.indexOf('?'));
+        }
+
+        if (ref.endsWith('/')) {
+            trailingSlashCount++;
+        }
+
+        let refPath = ref.startsWith('/')
+            ? join(wikiPath, ref)
+            : join(dirname(path), ref);
+        let refExists = cachedExistsSync(refPath);
+
+        if (!refExists) {
+            if (!ref.startsWith('/wiki/')) {
+                brokenRefs.add(ref);
+            } else if (getRedirects()[ref.substring(6).toLowerCase()] == null) {
+                const pathMatch = ref.match(/^\/wiki\/([a-z-]{1,5})\/(.+)/);
+                if (pathMatch != null) {
+                    const newRefPath = join(wikiPath, 'wiki', pathMatch[2]);
+                    if (cachedExistsSync(newRefPath)) {
+                        localeBasename = `${pathMatch[1]}.md`;
+                        refExists = true;
+                        refPath = newRefPath;
+                    } else {
+                        brokenRefs.add(ref);
+                    }
+                } else {
+                    brokenRefs.add(ref);
+                }
+            } else if (!allowRedirects) {
+                brokenRefs.add(ref);
+            }
+        }
+
+        if (fragment) {
+            // TODO: Gives up when the ref has a redirect. This could be changed to
+            // check redirected refs too (if `allowRedirects`)
             if (!refExists) {
-                brokenRefs.add(`${ref}#${section}`);
+                brokenRefs.add(url);
                 continue;
             }
 
-            let refMdPath = join(realRef, basename(path));
-            if (!existsSync(refMdPath)) {
-                refMdPath = join(realRef, 'en.md');
+            let refMdPath = join(refPath, localeBasename);
+            if (!cachedExistsSync(refMdPath)) {
+                refMdPath = join(refPath, 'en.md');
 
-                if (!existsSync(refMdPath)) {
-                    brokenRefs.add(`${ref}#${section}`);
+                if (!cachedExistsSync(refMdPath)) {
+                    brokenRefs.add(url);
                     continue;
                 }
             }
 
-            const refFile = readFileSync(refMdPath, 'utf8');
-            const sectionSlugs: string[] = [];
-            const sectionSlugLevels: { [key: string]: number; } = {};
-
-            for (const headerMatch of refFile.matchAll(/^#{2,3} (.+)$/gm)) {
-                let slug = headerMatch[1].toLowerCase()
-                    .replace(/!\[.*?\]\(.+?\)/g, '')
-                    .replace(/\[(.+?)\]\(.+?\)/g, '$1')
-                    .replace(/ /g, '-');
-
-                if (sectionSlugLevels[slug] == null)
-                    sectionSlugLevels[slug] = 0;
-                else
-                    slug += `.${++sectionSlugLevels[slug]}`;
-
-                sectionSlugs.push(slug);
+            if (!(await getSlugs(refMdPath)).includes(fragment)) {
+                brokenRefs.add(url);
+                continue;
             }
-
-            if (!sectionSlugs.includes(section) && !aTagSlugs.includes(section))
-                brokenRefs.add(`${ref}#${section}`);
         }
     }
 
@@ -99,10 +222,10 @@ export async function findBrokenRefs(paths: string[], options: FindBrokenRefsOpt
     if (paths.length === 0)
         paths.push('.');
 
-    const brokenRefInfos: { [key: string]: [number, Set<string> ]} = {};
+    const brokenRefInfos: { [key: string]: [number, Set<string>] } = {};
 
     for (const path of await getFiles(paths, 'md'))
-        brokenRefInfos[path] = findBrokenRefsForPath(path, options.allowRedirects, options.excludeOutdated);
+        brokenRefInfos[path] = await findBrokenRefsForPath(path, options.allowRedirects, options.excludeOutdated);
 
     if (options.aggregate) {
         const [trailingSlashCount, brokenRefs] = Object.values(brokenRefInfos)
