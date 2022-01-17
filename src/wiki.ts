@@ -1,7 +1,7 @@
 import type { Dictionary, Empty } from '@cl8n/types';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { load as yaml } from 'js-yaml';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import { warning } from './console';
 
 interface OsuWikiConfig {
@@ -48,10 +48,16 @@ export function loadWikiPath() {
     const expectedRepository = 'github:ppy/osu-wiki';
     const packageFilename = 'package.json';
 
-    let path = '.';
+    let path = resolve('.');
 
     while (!existsSync(join(path, packageFilename))) {
-        path = join(path, '..');
+        const parentPath = resolve(join(path, '..'));
+
+        if (path === parentPath) {
+            return false;
+        }
+
+        path = parentPath;
     }
 
     const packageInfo = JSON.parse(readFileSync(join(path, packageFilename), 'utf8')) as PackageInfo;
