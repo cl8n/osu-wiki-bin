@@ -16,14 +16,14 @@ async function replaceInFile(path: string, flag: boolean) {
     for (const match of content.matchAll(/b#(\d+)/g))
         try {
             content = content.replace(match[0], await beatmapLink(match[1]));
-        } catch (e) {
+        } catch (e: any) {
             errorX(`Failed to replace beatmap #${match[1]} in ${path}: ${e.message}`);
         }
 
     for (const match of content.matchAll(/s#(\d+)/g))
         try {
             content = content.replace(match[0], await beatmapsetLink(match[1]));
-        } catch (e) {
+        } catch (e: any) {
             errorX(`Failed to replace beatmapset #${match[1]} in ${path}: ${e.message}`);
         }
 
@@ -36,7 +36,7 @@ async function replaceInFile(path: string, flag: boolean) {
                 match[0],
                 await userLink(id, { byName, flag }),
             );
-        } catch (e) {
+        } catch (e: any) {
             errorX(`Failed to replace user ${byName ? '' : '#'}${id} in ${path}: ${e.message}`);
         }
     }

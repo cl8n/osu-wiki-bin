@@ -14,7 +14,7 @@ async function sandbox(action: () => Promise<void> | void): Promise<void> {
 
         if (result != null)
             await result;
-    } catch (e) {
+    } catch (e: any) {
         error(e.message);
     }
 }
