@@ -59,6 +59,10 @@ async function getSlugs(mdPath: string): Promise<string[]> {
             return;
         }
 
+        if (node.depth === 1) {
+            return;
+        }
+
         let headingText = '';
 
         visit(node, ['text'], (node: any) => {
