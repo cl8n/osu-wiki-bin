@@ -6,6 +6,7 @@ import { getFiles } from '../files';
 import { getRedirects, wikiPath } from '../wiki';
 import { error, errorX, warningX } from '../console';
 import { getImports, getMdAst } from '../remark';
+import { memoize } from '../memoize';
 
 interface FindBrokenRefsOptions {
     aggregate: boolean;
@@ -36,24 +37,13 @@ function urlsFromNode(node: any): string[] | undefined {
     }
 }
 
-const pathExistences: Record<string, boolean> = {};
-function cachedExistsSync(path: string): boolean {
-    if (pathExistences[path] != null) {
-        return pathExistences[path];
-    }
+const getMdAstMemoized = memoize(getMdAst);
+const getSlugsMemoized = memoize(getSlugs);
 
-    return pathExistences[path] = existsSync(path);
-}
-
-const slugsByMdPath: Record<string, string[]> = {};
 async function getSlugs(mdPath: string): Promise<string[]> {
-    if (slugsByMdPath[mdPath] != null) {
-        return slugsByMdPath[mdPath];
-    }
-
     const visit = (await getImports())['unist-util-visit'].default;
 
-    const mdAst = await getMdAst(mdPath);
+    const mdAst = await getMdAstMemoized(mdPath);
     const sectionSlugLevels: Record<string, number> = {};
     const slugs: string[] = [];
 
@@ -92,11 +82,11 @@ async function getSlugs(mdPath: string): Promise<string[]> {
         slugs.push(slug);
     });
 
-    return slugsByMdPath[mdPath] = slugs;
+    return slugs;
 }
 
 async function findBrokenRefsForPath(path: string, allowRedirects: boolean, excludeOutdated: boolean): Promise<[number, Set<string>]> {
-    const mdAst = await getMdAst(path);
+    const mdAst = await getMdAstMemoized(path);
     const visit = (await getImports())['unist-util-visit'].default;
 
     if (excludeOutdated && !path.endsWith('en.md')) {
@@ -157,7 +147,7 @@ async function findBrokenRefsForPath(path: string, allowRedirects: boolean, excl
         let refPath = ref.startsWith('/')
             ? join(wikiPath, ref)
             : join(dirname(path), ref);
-        let refExists = cachedExistsSync(refPath);
+        let refExists = existsSync(refPath);
 
         if (!refExists) {
             if (!ref.startsWith('/wiki/')) {
@@ -166,7 +156,7 @@ async function findBrokenRefsForPath(path: string, allowRedirects: boolean, excl
                 const pathMatch = ref.match(/^\/wiki\/([a-z-]{1,5})\/(.+)/);
                 if (pathMatch != null) {
                     const newRefPath = join(wikiPath, 'wiki', pathMatch[2]);
-                    if (cachedExistsSync(newRefPath)) {
+                    if (existsSync(newRefPath)) {
                         localeBasename = `${pathMatch[1]}.md`;
                         refExists = true;
                         refPath = newRefPath;
@@ -190,16 +180,16 @@ async function findBrokenRefsForPath(path: string, allowRedirects: boolean, excl
             }
 
             let refMdPath = join(refPath, localeBasename);
-            if (!cachedExistsSync(refMdPath)) {
+            if (!existsSync(refMdPath)) {
                 refMdPath = join(refPath, 'en.md');
 
-                if (!cachedExistsSync(refMdPath)) {
+                if (!existsSync(refMdPath)) {
                     brokenRefs.add(url);
                     continue;
                 }
             }
 
-            if (!(await getSlugs(refMdPath)).includes(fragment)) {
+            if (!(await getSlugsMemoized(refMdPath)).includes(fragment)) {
                 brokenRefs.add(url);
                 continue;
             }
