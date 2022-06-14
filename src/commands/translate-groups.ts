@@ -299,12 +299,17 @@ export function translateGroups(options: TranslateGroupsOptions) {
         if (groupInfoFilename === 'en.yaml')
             continue;
 
+        const groupInfoFilenameMatch = groupInfoFilename.match(/^([a-z-]{1,5})\.yaml$/);
+
+        if (groupInfoFilenameMatch == null)
+            continue;
+
         const groupInfo = yaml(readFileSync(join(metaPath, groupInfoFilename), 'utf8')) as Partial<GroupYaml>;
 
         if (groupInfo.outdated_translation)
             continue;
 
-        const language = groupInfoFilename.replace(/\.yaml$/, '');
+        const language = groupInfoFilenameMatch[1];
         const getString: GroupYamlGetString =
             (key) => nestedProperty(groupInfo, key) || nestedProperty(englishInfo, key);
 
