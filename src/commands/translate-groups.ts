@@ -16,7 +16,7 @@ interface TranslateGroupsOptions {
 }
 
 type GroupYaml = {
-    outdated: boolean;
+    outdated_translation?: boolean;
     separator: string;
     alumni: {
         roles: Record<string, string>;
@@ -301,7 +301,7 @@ export function translateGroups(options: TranslateGroupsOptions) {
 
         const groupInfo = yaml(readFileSync(join(metaPath, groupInfoFilename), 'utf8')) as Partial<GroupYaml>;
 
-        if (groupInfo.outdated)
+        if (groupInfo.outdated_translation)
             continue;
 
         const language = groupInfoFilename.replace(/\.yaml$/, '');

@@ -97,7 +97,7 @@ async function findBrokenRefsForPath(path: string, allowRedirects: boolean, excl
         let skip = false;
 
         visit(mdAst, ['yaml'], (node: { value: string; }) => {
-            if ((yaml(node.value) as Record<string, unknown>).outdated) {
+            if ((yaml(node.value) as Record<string, unknown>).outdated_translation) {
                 skip = true;
                 return false;
             }
@@ -243,6 +243,6 @@ export function findBrokenRefsCommandBuilder() {
         .description('Find broken link and image references')
         .option('-a, --aggregate', 'Aggregate output')
         .option('-r, --allow-redirects', "Don't count redirects as broken references")
-        .option('-o, --exclude-outdated', "Don't search in outdated articles")
+        .option('-o, --exclude-outdated', "Don't search in outdated translations")
         .action(findBrokenRefs);
 }
