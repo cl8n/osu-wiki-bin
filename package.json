@@ -1,6 +1,6 @@
 {
   "name": "osu-wiki",
-  "version": "0.13.3",
+  "version": "0.13.4",
   "author": "clayton <me@clayton.cc>",
   "bugs": "https://github.com/cl8n/osu-wiki-bin/issues",
   "description": "Tools for osu! wiki contributors",
@@ -33,6 +33,6 @@
     "typescript": "^4.5.4"
   },
   "engines": {
-    "node": ">=12"
+    "node": ">=14"
   }
 }
