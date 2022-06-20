@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'fs';
 import { load as yaml } from 'js-yaml';
 import { join } from 'path';
-import { warning } from '../console';
+import { error, warning } from '../console';
 import { replaceLineEndings } from '../text';
 import { wikiPath } from '../wiki';
 import { getKey, NestedKeyFor, nestedProperty } from '../deep';
@@ -47,7 +47,12 @@ function upperCaseFirst(string: string) {
         : string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-function spLanguageReplacer(englishInfo: GroupYaml, getString: GroupYamlGetString) {
+function spLanguageReplacer(englishInfo: GroupYaml, getString: GroupYamlGetString, language: string) {
+    if (Intl.DisplayNames.supportedLocalesOf(language).length === 0)
+        error(`Missing Node.js language support for ${language}. Make sure you are using a recent version of Node.js`);
+
+    const languageNames = new Intl.DisplayNames(language, { type: 'language' });
+
     return (spLanguagesString: string) => {
         const englishSpLanguages = spLanguagesString.split(englishInfo.separator);
         const spLanguages: string[] = [];
@@ -55,7 +60,7 @@ function spLanguageReplacer(englishInfo: GroupYaml, getString: GroupYamlGetStrin
         for (const spLanguage of englishSpLanguages) {
             let key = getKey(englishInfo, spLanguage, 'languages');
             if (key != null) {
-                spLanguages.push(getString(key));
+                spLanguages.push(getString(key) || languageNames.of(key.slice(10))!);
                 continue;
             }
 
@@ -73,9 +78,9 @@ function spLanguageReplacer(englishInfo: GroupYaml, getString: GroupYamlGetStrin
                 continue;
             }
 
-            let newLanguage = getString(key);
-            newLanguage = getString('languages.partial').replace('<language>', newLanguage);
-            spLanguages.push(newLanguage);
+            spLanguages.push(
+                getString('languages.partial').replace('<language>', getString(key) || languageNames.of(key.slice(10))!),
+            );
         }
 
         return upperCaseFirst(spLanguages.join(getString('separator')));
@@ -99,7 +104,7 @@ const updateBnTranslation: Translator = function (englishInfo, englishBn, getStr
     for (const tableMatch of englishBn.matchAll(/\| :-- \| :-- \|\n((?:\|.+\n)+)/g)) {
         let table = tableMatch[1];
 
-        table = table.replace(/(?<=^\|.+?\| ).+(?= \|$)/gm, spLanguageReplacer(englishInfo, getString));
+        table = table.replace(/(?<=^\|.+?\| ).+(?= \|$)/gm, spLanguageReplacer(englishInfo, getString, language));
 
         // "REMOVE_ME" is a hacky way to step through tables in the
         // translation by breaking the match as it goes. After all the
@@ -128,7 +133,7 @@ const updateGmtTranslation: Translator = function (englishInfo, englishGmt, getS
     }
 
     const table = englishGmt.match(/\| :-- \| :-- \| :-- \|\n((?:\|.+\n)+)/)![1]
-        .replace(/(?<=^\|.+?\| ).+(?= \|.+?\|$)/gm, spLanguageReplacer(englishInfo, getString))
+        .replace(/(?<=^\|.+?\| ).+(?= \|.+?\|$)/gm, spLanguageReplacer(englishInfo, getString, language))
         .replace(/(?<=^\|.+?\|.+?\| ).+(?= \|$)/gm, areasString =>
             upperCaseFirst(
                 areasString
@@ -177,7 +182,7 @@ const updateNatTranslation: Translator = function (englishInfo, englishNat, getS
     for (const tableMatch of englishNat.matchAll(/\| :-- \| :-- \| :-- \|\n((?:\|.+\n)+)/g)) {
         let table = tableMatch[1];
 
-        table = table.replace(/(?<=^\|.+?\| ).+(?= \|.+?\|$)/gm, spLanguageReplacer(englishInfo, getString));
+        table = table.replace(/(?<=^\|.+?\| ).+(?= \|.+?\|$)/gm, spLanguageReplacer(englishInfo, getString, language));
         table = table.replace(/(?<=^\|.+?\|.+?\| ).+(?= \|$)/gm, areasString =>
             upperCaseFirst(
                 areasString
@@ -262,7 +267,7 @@ const updateSupTranslation: Translator = function (englishInfo, englishSup, getS
     }
 
     const table = englishSup.match(/\| :-- \| :-- \|\n((?:\|.+\n)+)/)![1]
-        .replace(/(?<=^\|.+?\| ).+(?= \|$)/gm, spLanguageReplacer(englishInfo, getString));
+        .replace(/(?<=^\|.+?\| ).+(?= \|$)/gm, spLanguageReplacer(englishInfo, getString, language));
 
     sup.content = sup.content
         .replace(/(?<=\| :-- \| :-- \|\n)(?:\|.+\n)+/, table);
@@ -306,12 +311,13 @@ export function translateGroups(options: TranslateGroupsOptions) {
 
         const groupInfo = yaml(readFileSync(join(metaPath, groupInfoFilename), 'utf8')) as Partial<GroupYaml>;
 
-        if (groupInfo.outdated_translation)
-            continue;
+        // if (groupInfo.outdated_translation)
+        //     continue;
 
         const language = groupInfoFilenameMatch[1];
         const getString: GroupYamlGetString =
-            (key) => nestedProperty(groupInfo, key) || nestedProperty(englishInfo, key);
+            (key) => nestedProperty(groupInfo, key) ||
+                (key.startsWith('languages.') && key !== 'languages.partial' ? '' : nestedProperty(englishInfo, key));
 
         if (checkGroups.alu)
             updateAluTranslation(englishInfo, englishAlu, getString, language, teamPath);
