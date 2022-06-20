@@ -47,6 +47,22 @@ function upperCaseFirst(string: string) {
         : string.charAt(0).toUpperCase() + string.slice(1);
 }
 
+const frLowercaseVowels = new Set([
+    'a', 'à', 'â',
+    'e', 'é', 'è', 'ê', 'ë',
+    'h', // *usually* acts like a vowel, for this purpose
+    'i', 'î', 'ï',
+    'o', 'ô',
+    'u', 'ù', 'û', 'ü',
+    'y', 'ÿ',
+]);
+
+function getPartialString(getString: GroupYamlGetString, language: string, spLanguage: string): string {
+    return language === 'fr' && frLowercaseVowels.has(spLanguage.charAt(0).toLowerCase())
+        ? getString('languages.partial_vowel_prefix') || getString('languages.partial')
+        : getString('languages.partial');
+}
+
 function spLanguageReplacer(englishInfo: GroupYaml, getString: GroupYamlGetString, language: string) {
     if (Intl.DisplayNames.supportedLocalesOf(language).length === 0)
         error(`Missing Node.js language support for ${language}. Make sure you are using a recent version of Node.js`);
@@ -79,7 +95,8 @@ function spLanguageReplacer(englishInfo: GroupYaml, getString: GroupYamlGetStrin
             }
 
             spLanguages.push(
-                getString('languages.partial').replace('<language>', getString(key) || languageNames.of(key.slice(10))!),
+                getPartialString(getString, language, partialMatch[1])
+                    .replace('<language>', getString(key) || languageNames.of(key.slice(10))!),
             );
         }
 
