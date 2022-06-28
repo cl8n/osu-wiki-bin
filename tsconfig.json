@@ -3,15 +3,13 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "lib": [
-      "ES2019",
-      "ES2020.BigInt",
-      "ES2020.String",
+      "ES2021"
     ],
-    "module": "CommonJS",
+    "module": "Node16",
     "outDir": "dist",
     "rootDir": "src",
     "skipLibCheck": true,
     "strict": true,
-    "target": "ES2019",
+    "target": "ES2021"
   },
 }

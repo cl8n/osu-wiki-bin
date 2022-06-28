@@ -9,7 +9,7 @@ async function getProcessor() {
   if (processor == null) {
     const imports = await getImports();
     const newPlugins = [];
-    const remarkRc = await import(join(wikiPath, '.remarkrc'));
+    const remarkRc = (await import(join(wikiPath, '.remarkrc.js'))).default;
 
     for (const plugin of remarkRc.plugins) {
       if (Array.isArray(plugin)) {
@@ -30,7 +30,7 @@ async function getProcessor() {
       }
     }
 
-    processor = imports.remark.default()
+    processor = imports.remark.remark()
       .use({
         plugins: newPlugins,
         settings: remarkRc.settings,
@@ -42,7 +42,7 @@ async function getProcessor() {
 }
 
 async function importFromWiki(moduleName: string) {
-  const path = join(wikiPath, 'node_modules', moduleName);
+  const path = join(wikiPath, 'node_modules', moduleName, 'index.js');
   const module = await import(path)
     .catch(() => {
       error(`${moduleName} is not installed in osu-wiki. Run \`npm install\`.`, 1);

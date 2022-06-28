@@ -41,7 +41,7 @@ const getMdAstMemoized = memoize(getMdAst);
 const getSlugsMemoized = memoize(getSlugs);
 
 async function getSlugs(mdPath: string): Promise<string[]> {
-    const visit = (await getImports())['unist-util-visit'].default;
+    const visit = (await getImports())['unist-util-visit'].visit;
 
     const mdAst = await getMdAstMemoized(mdPath);
     const sectionSlugLevels: Record<string, number> = {};
@@ -91,7 +91,7 @@ async function getSlugs(mdPath: string): Promise<string[]> {
 
 async function findBrokenRefsForPath(path: string, allowRedirects: boolean, excludeOutdated: boolean): Promise<[number, Set<string>]> {
     const mdAst = await getMdAstMemoized(path);
-    const visit = (await getImports())['unist-util-visit'].default;
+    const visit = (await getImports())['unist-util-visit'].visit;
 
     if (excludeOutdated && !path.endsWith('en.md')) {
         let skip = false;
