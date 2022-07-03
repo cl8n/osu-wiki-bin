@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import { existsSync } from 'fs';
 import { join } from 'path';
 import { error, info, success, warning } from '../console';
-import { git } from '../git';
+import { gitFileList } from '../git';
 import { run } from '../process';
 import { wikiPath } from '../wiki';
 import { findBrokenRefs } from './find-broken-refs';
@@ -22,7 +22,7 @@ async function sandbox(action: () => Promise<void> | void): Promise<void> {
 export async function lint(paths: string[]): Promise<void> {
     if (paths.length === 0) {
         paths = [...new Set([
-            ...(await git([
+            ...(await gitFileList([
                 'diff',
                 '--diff-filter=d',
                 '--name-only',
@@ -30,8 +30,8 @@ export async function lint(paths: string[]): Promise<void> {
                 '-z',
                 '--',
                 '*.md',
-            ])).stdout.split('\0'),
-            ...(await git([
+            ])),
+            ...(await gitFileList([
                 'diff',
                 '--cached',
                 '--diff-filter=d',
@@ -40,8 +40,8 @@ export async function lint(paths: string[]): Promise<void> {
                 '-z',
                 '--',
                 '*.md',
-            ])).stdout.split('\0'),
-            ...(await git([
+            ])),
+            ...(await gitFileList([
                 'diff',
                 '--diff-filter=d',
                 '--name-only',
@@ -50,17 +50,17 @@ export async function lint(paths: string[]): Promise<void> {
                 'master...',
                 '--',
                 '*.md',
-            ])).stdout.split('\0'),
-            ...(await git([
+            ])),
+            ...(await gitFileList([
                 'ls-files',
                 '--exclude-standard',
                 '--others',
                 '-z',
                 '--',
                 '*.md',
-            ])).stdout.split('\0'),
+            ])),
         ])]
-            .filter((path) => path.length > 0);
+            .map((path) => join(wikiPath, path));
 
         if (paths.length === 0) {
             success('No changes since `master`', true);
