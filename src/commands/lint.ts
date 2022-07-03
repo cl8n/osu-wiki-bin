@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { existsSync } from 'fs';
-import { join } from 'path';
+import { join, relative } from 'path';
 import { error, info, success, warning } from '../console';
 import { gitFileList } from '../git';
 import { run } from '../process';
@@ -60,7 +60,7 @@ export async function lint(paths: string[]): Promise<void> {
                 '*.md',
             ])),
         ])]
-            .map((path) => join(wikiPath, path));
+            .map((path) => relative('.', join(wikiPath, path)));
 
         if (paths.length === 0) {
             success('No changes since master', true);
