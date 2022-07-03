@@ -29,15 +29,17 @@ export async function lint(paths: string[]): Promise<void> {
                 '--no-renames',
                 '-z',
                 'master...',
+                '--',
                 '*.md',
-            ])).split('\0'),
+            ])).stdout.split('\0'),
             ...(await git([
                 'ls-files',
                 '--exclude-standard',
                 '--others',
                 '-z',
+                '--',
                 '*.md',
-            ])).split('\0'),
+            ])).stdout.split('\0'),
         ])]
             .filter((path) => path.length > 0);
 
@@ -67,8 +69,9 @@ export async function lint(paths: string[]): Promise<void> {
             '--no-stdout',
             '--quiet',
             '--silently-ignore',
+            '--',
             ...paths,
-        ], wikiPath));
+        ]));
     } else {
         warning('Remark is not installed in osu-wiki. Run `npm install`.');
     }
