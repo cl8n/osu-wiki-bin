@@ -71,6 +71,7 @@ export async function getImports() {
   return wikiImports;
 }
 
+// TODO: Cache should be cleared when the processor changes
 export async function getMdAst(filename: string) {
   const processor = await getProcessor();
   const vfile = (await getImports())['to-vfile'].readSync(filename);
