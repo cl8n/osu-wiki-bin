@@ -1,6 +1,9 @@
+import { createHash } from 'crypto';
+import { existsSync } from 'fs';
+import { mkdir, readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { error } from './console';
-import { wikiPath } from './wiki';
+import { configPath, wikiPath } from './wiki';
 
 const wikiImports: Record<string, any> = {};
 let processor: any;
@@ -71,9 +74,21 @@ export async function getImports() {
 export async function getMdAst(filename: string) {
   const processor = await getProcessor();
   const vfile = (await getImports())['to-vfile'].readSync(filename);
+  const md5 = createHash('md5').update(vfile.value).digest('hex');
+  const cacheDirname = configPath(`md-ast-cache/${md5.slice(0, 2)}`);
+  const cachePath = join(cacheDirname, md5);
 
-  return await processor.run(
+  if (existsSync(cachePath)) {
+    return JSON.parse(await readFile(cachePath, 'utf8'));
+  }
+
+  const mdAst = await processor.run(
     processor.parse(vfile),
     vfile,
   );
+
+  await mkdir(cacheDirname, { recursive: true });
+  await writeFile(cachePath, JSON.stringify(mdAst));
+
+  return mdAst;
 }

@@ -1,5 +1,5 @@
 import type { Dictionary, Empty } from '@cl8n/types';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'fs';
 import { load as yaml } from 'js-yaml';
 import { join, resolve } from 'path';
 import { warning } from './console';
@@ -15,27 +15,49 @@ const blankConfig: Required<Empty<OsuWikiConfig>> = {
 };
 
 // TODO: error checking... and has to be called after loadWikiPath
-let _config: OsuWikiConfig;
+let _config: (OsuWikiConfig & { basePath: string }) | undefined;
 export function loadConfig() {
-    const configPath = join(wikiPath, '.osu-wiki-bin.json');
+    if (_config != null) {
+        throw new Error('Config must not be loaded');
+    }
+
+    const basePath = join(wikiPath, '.osu-wiki-bin');
+    const configPath = join(basePath, 'config.json');
+    const oldConfigPath = join(wikiPath, '.osu-wiki-bin.json');
+
+    mkdirSync(basePath, { mode: 0o700, recursive: true });
+
+    if (existsSync(oldConfigPath)) {
+        renameSync(oldConfigPath, configPath);
+    }
 
     if (existsSync(configPath)) {
-        _config = JSON.parse(readFileSync(configPath, 'utf8')) as OsuWikiConfig;
+        _config = { basePath, ...JSON.parse(readFileSync(configPath, 'utf8')) };
     } else {
-        _config = blankConfig;
+        _config = { basePath, ...blankConfig };
         writeFileSync(configPath, JSON.stringify(blankConfig, null, 2) + '\n');
         warning(`No config options set. Some commands won't work without an API key.\nSee ${configPath}`);
     }
 }
 
 export function config(key: keyof OsuWikiConfig) {
-    const value = _config[key];
+    const value = _config?.[key];
 
     if (value != null && value !== blankConfig[key]) {
         return value;
     }
 
     throw new Error(`Config option "${key}" must be set`);
+}
+
+export function configPath(relativePath?: string): string {
+    if (_config?.basePath == null) {
+        throw new Error('Config must be loaded');
+    }
+
+    return relativePath == null
+        ? _config.basePath
+        : join(_config.basePath, relativePath);
 }
 
 // TODO: error checking...
