@@ -63,7 +63,7 @@ export async function lint(paths: string[]): Promise<void> {
             .map((path) => join(wikiPath, path));
 
         if (paths.length === 0) {
-            success('No changes since `master`', true);
+            success('No changes since master', true);
         }
 
         info('find-redundant-redirects:');
