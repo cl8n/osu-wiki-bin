@@ -9,8 +9,6 @@ function promiseResolved(promise: Promise<unknown>): Promise<boolean> {
     .catch(() => false);
 }
 
-const pathRegex = /(?<=^|\/)[a-z]{2}(?:-[a-z]{2})?\.md$/i;
-
 export async function reviewTranslation() {
   const branch = (await git(['branch', '--show-current'])).stdout.trim();
 
@@ -37,17 +35,13 @@ export async function reviewTranslation() {
   }
 
   const changedFiles = await gitFileList(['diff', '--name-only', '-z', 'master...']);
-  const relatedEnglishFiles = changedFiles
-    .filter((path) => !path.endsWith('en.md'))
-    .filter((path) => pathRegex.test(path))
-    .map((path) => path.replace(pathRegex, 'en.md'));
 
-  if (!await promiseResolved(git(['diff', '--quiet', '...master', '--', ...new Set(changedFiles)]))) {
+  if (!await promiseResolved(git(['diff', '--quiet', '...master', '--', ...changedFiles]))) {
     error(`Found unmerged changes in master to files changed in ${branch}. Merge master into ${branch}`, 1);
   }
 
-  if (!await promiseResolved(git(['diff', '--quiet', '...master', '--', ...new Set(relatedEnglishFiles)]))) {
-    warning(`Found unmerged changes in master to related EN files in ${branch}. Merging master into ${branch}`);
+  if (!await promiseResolved(git(['diff', '--quiet', '...master']))) {
+    warning(`Found unmerged changes in master. Merging master into ${branch}`);
     await git(['merge', 'master']);
   }
 
