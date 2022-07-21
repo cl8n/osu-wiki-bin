@@ -6,7 +6,6 @@ import { replaceCommandBuilder } from './replace';
 import { reviewTranslationCommandBuilder } from './review-translation';
 import { sortListsCommandBuilder } from './sort-lists';
 import { translateGroupsCommandBuilder } from './translate-groups';
-import { updateFlagsCommandBuilder } from './update-flags';
 
 export const commandBuilders = [
     checkUserTitlesCommandBuilder,
@@ -17,5 +16,4 @@ export const commandBuilders = [
     reviewTranslationCommandBuilder,
     sortListsCommandBuilder,
     translateGroupsCommandBuilder,
-    updateFlagsCommandBuilder,
 ];

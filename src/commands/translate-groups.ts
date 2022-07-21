@@ -6,7 +6,6 @@ import { error, warning } from '../console';
 import { replaceLineEndings } from '../text';
 import { wikiPath } from '../wiki';
 import { getKey, NestedKeyFor, nestedProperty } from '../deep';
-import { updateFlags } from './update-flags';
 
 // TODO whole thing is so shit
 // upgrade me
@@ -132,7 +131,6 @@ const updateBnTranslation: Translator = function (englishInfo, englishBn, getStr
     bn.content = bn.content.replace(/REMOVE_ME/g, '');
 
     writeFileSync(bnFilename, replaceLineEndings(bn.content, bn.originalEnding).content);
-    updateFlags([bnFilename]);
 }
 
 const updateGmtTranslation: Translator = function (englishInfo, englishGmt, getString, language, teamPath) {
@@ -179,7 +177,6 @@ const updateGmtTranslation: Translator = function (englishInfo, englishGmt, getS
     gmt.content = gmt.content.replace(/REMOVE_ME/g, '');
 
     writeFileSync(gmtFilename, replaceLineEndings(gmt.content, gmt.originalEnding).content);
-    updateFlags([gmtFilename]);
 }
 
 const updateNatTranslation: Translator = function (englishInfo, englishNat, getString, language, teamPath) {
@@ -225,7 +222,6 @@ const updateNatTranslation: Translator = function (englishInfo, englishNat, getS
     nat.content = nat.content.replace(/REMOVE_ME/g, '');
 
     writeFileSync(natFilename, replaceLineEndings(nat.content, nat.originalEnding).content);
-    updateFlags([natFilename]);
 }
 
 const updateAluTranslation: Translator = function (englishInfo, englishAlu, getString, language, teamPath) {
@@ -266,7 +262,6 @@ const updateAluTranslation: Translator = function (englishInfo, englishAlu, getS
     alu.content = alu.content.replace(/(?<=\| :-- \| :-- \|\n)(?:\|.+\n)+/, table);
 
     writeFileSync(aluFilename, replaceLineEndings(alu.content, alu.originalEnding).content);
-    updateFlags([aluFilename]);
 }
 
 const updateSupTranslation: Translator = function (englishInfo, englishSup, getString, language, teamPath) {
@@ -290,7 +285,6 @@ const updateSupTranslation: Translator = function (englishInfo, englishSup, getS
         .replace(/(?<=\| :-- \| :-- \|\n)(?:\|.+\n)+/, table);
 
     writeFileSync(supFilename, replaceLineEndings(sup.content, sup.originalEnding).content);
-    updateFlags([supFilename]);
 }
 
 export function translateGroups(options: TranslateGroupsOptions) {
@@ -303,9 +297,6 @@ export function translateGroups(options: TranslateGroupsOptions) {
     const englishNat = replaceLineEndings(readFileSync(join(teamPath, 'Nomination_Assessment_Team/en.md'), 'utf8')).content.replace(/<!-- TODO -->/g, '');
     const englishAlu = replaceLineEndings(readFileSync(join(teamPath, 'osu!_Alumni/en.md'), 'utf8')).content.replace(/<!-- TODO -->/g, '');
     const englishSup = replaceLineEndings(readFileSync(join(teamPath, 'Support_Team/en.md'), 'utf8')).content.replace(/<!-- TODO -->/g, '');
-
-    for (const group of ['Beatmap_Nominators', 'Global_Moderation_Team', 'Nomination_Assessment_Team', 'osu!_Alumni', 'Support_Team'])
-        updateFlags([join(teamPath, `${group}/en.md`)]);
 
     // TODO lol
     const checkAllGroups = options.group == null;
