@@ -2,6 +2,8 @@ import { Command } from 'commander';
 import { readFileSync, writeFileSync } from 'fs';
 import { getFiles } from '../files';
 
+const rowRegex = /^[-|]\s+(?:::\s*{\s*flag="?[A-Z]{2}"?\s*}\s*::\s+)?\[(.+?)\]\(http/;
+
 function sortListsInPath(path: string) {
     const file = readFileSync(path, 'utf8');
     let lines = file.split('\n');
@@ -9,7 +11,7 @@ function sortListsInPath(path: string) {
     let currentList = [];
     let currentListStart = null;
     for (let i = 0; i < lines.length; ++i) {
-        const match = lines[i].match(/^[-|] !\[\]\[flag_..\] \[(.+?)\]\(https.+$/);
+        const match = lines[i].match(rowRegex);
         if (match !== null) {
             if (currentListStart == null)
                 currentListStart = i;
