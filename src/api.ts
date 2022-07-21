@@ -76,7 +76,7 @@ export async function userLink(userId: string, options?: UserLinkOptions | UserL
     if (filledOptions.returnObj)
         return user[0];
     else
-        return (filledOptions.flag ? `![][flag_${user[0].country}] ` : '') + `[${md(user[0].username)}](https://osu.ppy.sh/users/${user[0].user_id})`;
+        return (filledOptions.flag ? `::{ flag=${user[0].country} }:: ` : '') + `[${md(user[0].username)}](https://osu.ppy.sh/users/${user[0].user_id})`;
 }
 
 export async function beatmapLink(beatmapId: string): Promise<string> {
