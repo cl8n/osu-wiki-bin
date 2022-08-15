@@ -2,10 +2,10 @@
 
 import { Command } from 'commander';
 import updateNotifier from 'update-notifier';
-import { commandBuilders } from './commands';
-import { error } from './console';
-import { packageInfo } from './package';
-import { loadConfig, loadWikiPath } from './wiki';
+import { commandBuilders } from './commands/index.js';
+import { error } from './console.js';
+import { packageInfo } from './package.cjs';
+import { loadConfig, loadWikiPath } from './wiki.js';
 
 updateNotifier({ pkg: packageInfo }).notify();
 

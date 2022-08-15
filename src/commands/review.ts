@@ -1,7 +1,7 @@
 import { Command } from 'commander';
-import { error, info, success, warning } from '../console';
-import { git, gitFileList } from '../git';
-import { lint } from './lint';
+import { error, info, success, warning } from '../console.js';
+import { git, gitFileList } from '../git.js';
+import { lint } from './lint.js';
 
 function promiseResolved(promise: Promise<unknown>): Promise<boolean> {
   return promise

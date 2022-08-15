@@ -2,11 +2,11 @@ import { Command } from 'commander';
 import { existsSync } from 'fs';
 import { load as yaml } from 'js-yaml';
 import { basename, dirname, join } from 'path';
-import { getFiles } from '../files';
-import { getRedirects, wikiPath } from '../wiki';
-import { error, errorX, warningX } from '../console';
-import { getImports, getMdAst } from '../remark';
-import { memoize } from '../memoize';
+import { getFiles } from '../files.js';
+import { getRedirects, wikiPath } from '../wiki.js';
+import { error, errorX, warningX } from '../console.js';
+import { getImports, getMdAst } from '../remark.js';
+import { memoize } from '../memoize.js';
 
 interface FindBrokenRefsOptions {
     aggregate: boolean;

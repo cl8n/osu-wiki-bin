@@ -1,5 +1,5 @@
 import { execFile } from 'child_process';
-import { wikiPath } from './wiki';
+import { wikiPath } from './wiki.js';
 
 export function git(args: string[]): Promise<{ stdout: string; stderr: string }> {
     return new Promise((resolve, reject) => {

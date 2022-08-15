@@ -2,10 +2,10 @@ import { Command } from 'commander';
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'fs';
 import { load as yaml } from 'js-yaml';
 import { join } from 'path';
-import { error, warning } from '../console';
-import { replaceLineEndings } from '../text';
-import { wikiPath } from '../wiki';
-import { getKey, NestedKeyFor, nestedProperty } from '../deep';
+import { error, warning } from '../console.js';
+import { replaceLineEndings } from '../text.js';
+import { wikiPath } from '../wiki.js';
+import { getKey, NestedKeyFor, nestedProperty } from '../deep.js';
 
 // TODO whole thing is so shit
 // upgrade me

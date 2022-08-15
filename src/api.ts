@@ -1,8 +1,8 @@
 import type { Dictionary } from '@cl8n/types';
 import { get } from 'https';
-import { linkName } from './game-mode';
-import { md } from './text';
-import { config } from './wiki';
+import { linkName } from './game-mode.js';
+import { md } from './text.js';
+import { config } from './wiki.js';
 
 interface UserLinkOptionsBase {
     byName?: boolean;

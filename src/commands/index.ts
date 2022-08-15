@@ -1,11 +1,11 @@
-import { checkUserTitlesCommandBuilder } from './check-user-titles';
-import { findBrokenRefsCommandBuilder } from './find-broken-refs';
-import { findRedundantRedirectsCommandBuilder } from './find-redundant-redirects';
-import { lintCommandBuilder } from './lint';
-import { replaceCommandBuilder } from './replace';
-import { reviewCommandBuilder } from './review';
-import { sortListsCommandBuilder } from './sort-lists';
-import { translateGroupsCommandBuilder } from './translate-groups';
+import { checkUserTitlesCommandBuilder } from './check-user-titles.js';
+import { findBrokenRefsCommandBuilder } from './find-broken-refs.js';
+import { findRedundantRedirectsCommandBuilder } from './find-redundant-redirects.js';
+import { lintCommandBuilder } from './lint.js';
+import { replaceCommandBuilder } from './replace.js';
+import { reviewCommandBuilder } from './review.js';
+import { sortListsCommandBuilder } from './sort-lists.js';
+import { translateGroupsCommandBuilder } from './translate-groups.js';
 
 export const commandBuilders = [
     checkUserTitlesCommandBuilder,

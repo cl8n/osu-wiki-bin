@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { readFileSync, writeFileSync } from 'fs';
-import { getFiles } from '../files';
+import { getFiles } from '../files.js';
 
 const rowRegex = /^[-|]\s+(?:::\s*{\s*flag="?[A-Z]{2}"?\s*}\s*::\s+)?\[(.+?)\]\(http/;
 

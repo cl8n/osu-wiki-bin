@@ -1,12 +1,12 @@
 import { Command } from 'commander';
 import { existsSync } from 'fs';
 import { join, relative } from 'path';
-import { error, info, success, warning } from '../console';
-import { gitFileList } from '../git';
-import { run } from '../process';
-import { wikiPath } from '../wiki';
-import { findBrokenRefs } from './find-broken-refs';
-import { findRedundantRedirects } from './find-redundant-redirects';
+import { error, info, success, warning } from '../console.js';
+import { gitFileList } from '../git.js';
+import { run } from '../process.js';
+import { wikiPath } from '../wiki.js';
+import { findBrokenRefs } from './find-broken-refs.js';
+import { findRedundantRedirects } from './find-redundant-redirects.js';
 
 async function sandbox(action: () => Promise<void> | void): Promise<void> {
     try {

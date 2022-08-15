@@ -2,7 +2,7 @@ import type { Dictionary, Empty } from '@cl8n/types';
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'fs';
 import { load as yaml } from 'js-yaml';
 import { join, resolve } from 'path';
-import { warning } from './console';
+import { warning } from './console.js';
 
 interface OsuWikiConfig {
     osuApiKey?: string;

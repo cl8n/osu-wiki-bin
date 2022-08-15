@@ -2,8 +2,8 @@ import { createHash } from 'crypto';
 import { existsSync } from 'fs';
 import { mkdir, readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
-import { error } from './console';
-import { configPath, wikiPath } from './wiki';
+import { error } from './console.js';
+import { configPath, wikiPath } from './wiki.js';
 
 const wikiImports: Record<string, any> = {};
 let processor: any;
