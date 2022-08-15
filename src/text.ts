@@ -2,11 +2,20 @@ export function md(text: string): string {
     return text.replace(/[_\[\]\(\)*~\\]/g, '\\$&');
 }
 
-export function replaceLineEndings(content: string, ending: string = '\n') {
-    const originalEndingMatch = content.match(/\r\n|\r|\n/);
-    const originalEnding = originalEndingMatch == null ? undefined : originalEndingMatch[0];
+interface LineEndingsInfo {
+    content: string;
+    originalEnding: string;
+}
 
-    content = content.replace(/\r\n|\r|\n/g, ending);
+export function replaceLineEndings(content: string): LineEndingsInfo
+export function replaceLineEndings(lineEndingsInfo: LineEndingsInfo): string
+export function replaceLineEndings(contentOrLineEndingsInfo: string | LineEndingsInfo): string | LineEndingsInfo {
+    if (typeof contentOrLineEndingsInfo === 'object') {
+        return contentOrLineEndingsInfo.content.replaceAll('\n', contentOrLineEndingsInfo.originalEnding);
+    }
 
-    return { content, originalEnding };
+    return {
+        content: contentOrLineEndingsInfo.replaceAll(/\r\n|\r|\n/g, '\n'),
+        originalEnding: contentOrLineEndingsInfo.match(/\r\n|\r|\n/)?.[0] ?? '\n',
+    };
 }

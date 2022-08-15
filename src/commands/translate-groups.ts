@@ -130,7 +130,7 @@ const updateBnTranslation: Translator = function (englishInfo, englishBn, getStr
 
     bn.content = bn.content.replace(/REMOVE_ME/g, '');
 
-    writeFileSync(bnFilename, replaceLineEndings(bn.content, bn.originalEnding).content);
+    writeFileSync(bnFilename, replaceLineEndings(bn));
 }
 
 const updateGmtTranslation: Translator = function (englishInfo, englishGmt, getString, language, teamPath) {
@@ -176,7 +176,7 @@ const updateGmtTranslation: Translator = function (englishInfo, englishGmt, getS
     gmt.content = gmt.content.replace(/(?<=\| :-- \| :-- \| :-- \|\n)(?:\|.+\n)+/, table2);
     gmt.content = gmt.content.replace(/REMOVE_ME/g, '');
 
-    writeFileSync(gmtFilename, replaceLineEndings(gmt.content, gmt.originalEnding).content);
+    writeFileSync(gmtFilename, replaceLineEndings(gmt));
 }
 
 const updateNatTranslation: Translator = function (englishInfo, englishNat, getString, language, teamPath) {
@@ -221,7 +221,7 @@ const updateNatTranslation: Translator = function (englishInfo, englishNat, getS
 
     nat.content = nat.content.replace(/REMOVE_ME/g, '');
 
-    writeFileSync(natFilename, replaceLineEndings(nat.content, nat.originalEnding).content);
+    writeFileSync(natFilename, replaceLineEndings(nat));
 }
 
 const updateAluTranslation: Translator = function (englishInfo, englishAlu, getString, language, teamPath) {
@@ -261,7 +261,7 @@ const updateAluTranslation: Translator = function (englishInfo, englishAlu, getS
 
     alu.content = alu.content.replace(/(?<=\| :-- \| :-- \|\n)(?:\|.+\n)+/, table);
 
-    writeFileSync(aluFilename, replaceLineEndings(alu.content, alu.originalEnding).content);
+    writeFileSync(aluFilename, replaceLineEndings(alu));
 }
 
 const updateSupTranslation: Translator = function (englishInfo, englishSup, getString, language, teamPath) {
@@ -284,7 +284,7 @@ const updateSupTranslation: Translator = function (englishInfo, englishSup, getS
     sup.content = sup.content
         .replace(/(?<=\| :-- \| :-- \|\n)(?:\|.+\n)+/, table);
 
-    writeFileSync(supFilename, replaceLineEndings(sup.content, sup.originalEnding).content);
+    writeFileSync(supFilename, replaceLineEndings(sup));
 }
 
 export function translateGroups(options: TranslateGroupsOptions) {
