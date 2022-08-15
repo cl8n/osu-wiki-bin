@@ -1,4 +1,4 @@
-import { dim, green, red, yellow } from 'chalk';
+import chalk from 'chalk';
 
 export function error(message: string): void;
 export function error(message: string, exitCode: number): never;
@@ -10,17 +10,17 @@ export function error(message: string, exitCode?: number): never | void {
 }
 
 export function errorX(message: string): void {
-    console.error(red(message));
+    console.error(chalk.red(message));
 }
 
 export function info(message: string): void {
-    console.error(dim(message));
+    console.error(chalk.dim(message));
 }
 
 export function success(message: string): void;
 export function success(message: string, exit: true): never;
 export function success(message: string, exit?: true): never | void {
-    console.error(green(message));
+    console.error(chalk.green(message));
 
     if (exit != null)
         process.exit();
@@ -31,5 +31,5 @@ export function warning(message: string): void {
 }
 
 export function warningX(message: string): void {
-    console.error(yellow(message));
+    console.error(chalk.yellow(message));
 }
