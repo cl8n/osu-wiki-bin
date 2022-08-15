@@ -9,11 +9,11 @@ function promiseResolved(promise: Promise<unknown>): Promise<boolean> {
     .catch(() => false);
 }
 
-export async function reviewTranslation() {
+export async function review() {
   const branch = (await git(['branch', '--show-current'])).stdout.trim();
 
   if (branch === 'master') {
-    error('Must have a translation branch checked out', 1);
+    error('Must have a branch other than master checked out', 1);
   }
 
   if (!await promiseResolved(git(['diff', '--quiet'])) || !await promiseResolved(git(['diff', '--cached', '--quiet']))) {
@@ -50,8 +50,8 @@ export async function reviewTranslation() {
   success(`Ready to review. Files changed in ${branch}:\n${changedFiles.map((path) => `  ${path}`).join('\n')}`);
 }
 
-export function reviewTranslationCommandBuilder() {
-  return new Command('review-translation')
-    .description('Prepare a translation branch for review')
-    .action(reviewTranslation);
+export function reviewCommandBuilder() {
+  return new Command('review')
+    .description('Prepare a branch for review')
+    .action(review);
 }
