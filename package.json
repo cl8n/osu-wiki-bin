@@ -18,6 +18,7 @@
   "files": [
     "dist"
   ],
+  "type": "module",
   "dependencies": {
     "chalk": "^4.1.2",
     "commander": "^8.3.0",

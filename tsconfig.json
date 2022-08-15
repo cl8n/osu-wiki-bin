@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "lib": [
       "ES2021"
@@ -8,7 +7,6 @@
     "module": "Node16",
     "outDir": "dist",
     "rootDir": "src",
-    "skipLibCheck": true,
     "strict": true,
     "target": "ES2021"
   },
