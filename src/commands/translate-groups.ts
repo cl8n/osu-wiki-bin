@@ -303,7 +303,7 @@ export function translateGroups(options: TranslateGroupsOptions) {
     const checkGroups = {
         alu: checkAllGroups || options.group!.some(g => g.match(/alu|alm/i)),
         bng: checkAllGroups || options.group!.some(g => g.match(/bng?|nominator/i)),
-        gmt: checkAllGroups || options.group!.some(g => g.match(/gmt|mod|global moderat/i)),
+        gmt: checkAllGroups || options.group!.some(g => g.match(/gmt|mod/i)),
         nat: checkAllGroups || options.group!.some(g => g.match(/nat|nomination assessment/i)),
         sup: checkAllGroups || options.group!.some(g => g.match(/sup/i)),
     };
