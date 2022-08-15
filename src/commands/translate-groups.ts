@@ -312,7 +312,7 @@ export function translateGroups(options: TranslateGroupsOptions) {
         if (groupInfoFilename === 'en.yaml')
             continue;
 
-        const groupInfoFilenameMatch = groupInfoFilename.match(/^([a-z-]{1,5})\.yaml$/);
+        const groupInfoFilenameMatch = groupInfoFilename.match(/^([a-z]{2}(?:-[a-z]{2})?)\.yaml$/);
 
         if (groupInfoFilenameMatch == null)
             continue;

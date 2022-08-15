@@ -136,7 +136,7 @@ async function findBrokenRefsForPath(path: string, allowRedirects: boolean, excl
         let localeBasename = defaultLocaleBasename;
 
         if (ref.includes('?')) {
-            const localeMatch = ref.match(/\?locale=([a-z-]{1,5})/);
+            const localeMatch = ref.match(/\?locale=([a-z]{2}(?:-[a-z]{2})?)/);
             if (localeMatch != null) {
                 localeBasename = `${localeMatch[1]}.md`;
             }
@@ -157,7 +157,7 @@ async function findBrokenRefsForPath(path: string, allowRedirects: boolean, excl
             if (!ref.startsWith('/wiki/')) {
                 brokenRefs.add(ref);
             } else if (getRedirects()[ref.substring(6).toLowerCase()] == null) {
-                const pathMatch = ref.match(/^\/wiki\/([a-z-]{1,5})\/(.+)/);
+                const pathMatch = ref.match(/^\/wiki\/([a-z]{2}(?:-[a-z]{2})?)\/(.+)/);
                 if (pathMatch != null) {
                     const newRefPath = join(wikiPath, 'wiki', pathMatch[2]);
                     if (existsSync(newRefPath)) {
