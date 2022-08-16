@@ -3,350 +3,352 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from 'fs';
 import { load as yaml } from 'js-yaml';
 import { join } from 'path';
 import { error, warning } from '../console.js';
-import { replaceLineEndings } from '../text.js';
 import { wikiPath } from '../wiki.js';
-import { getKey, NestedKeyFor, nestedProperty } from '../deep.js';
-
-// TODO whole thing is so shit
-// upgrade me
+import { getKey, NestedKeyFor, nestedProperty, NestedScopesFor } from '../deep.js';
 
 interface TranslateGroupsOptions {
-    group?: string[];
+  group?: string[];
 }
 
 type GroupYaml = {
-    outdated_translation?: boolean;
-    separator: string;
-    alumni: {
-        roles: Record<string, string>;
-    };
-    gmt: {
-        all_mods: string;
-        areas: Record<string, string>;
-    };
-    nat: {
-        areas: Record<string, string>;
-    };
-    languages: Record<string, string>;
+  outdated_translation?: boolean;
+  separator: string;
+  alumni: {
+    roles: Record<string, string>;
+  };
+  gmt: {
+    all_mods: string;
+    areas: Record<string, string>;
+  };
+  nat: {
+    areas: Record<string, string>;
+  };
+  languages: Record<string, string>;
 };
-
 type GroupYamlGetString = (key: NestedKeyFor<GroupYaml, string>) => string;
 
-type Translator = (
-    enInfo: GroupYaml,
-    en: string,
-    getString: GroupYamlGetString,
-    language: string,
-    teamPath: string,
-) => void;
-
 function upperCaseFirst(string: string) {
-    return string.startsWith('osu!')
-        ? string
-        : string.charAt(0).toUpperCase() + string.slice(1);
+  return string.startsWith('osu!')
+    ? string
+    : string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 const frLowercaseVowels = new Set([
-    'a', 'à', 'â',
-    'e', 'é', 'è', 'ê', 'ë',
-    'h', // *usually* acts like a vowel, for this purpose
-    'i', 'î', 'ï',
-    'o', 'ô',
-    'u', 'ù', 'û', 'ü',
-    'y', 'ÿ',
+  'a', 'à', 'â',
+  'e', 'é', 'è', 'ê', 'ë',
+  'h', // *usually* acts like a vowel, for this purpose
+  'i', 'î', 'ï',
+  'o', 'ô',
+  'u', 'ù', 'û', 'ü',
+  'y', 'ÿ',
 ]);
 
-function getPartialString(getString: GroupYamlGetString, language: string, spLanguage: string): string {
-    return language === 'fr' && frLowercaseVowels.has(spLanguage.charAt(0).toLowerCase())
-        ? getString('languages.partial_vowel_prefix') || getString('languages.partial')
-        : getString('languages.partial');
+function getSpLanguageReplacer(enInfo: GroupYaml, getString: GroupYamlGetString, language: string) {
+  if (Intl.DisplayNames.supportedLocalesOf(language).length === 0)
+    error(`Missing Node.js language support for ${language}. Make sure you are using a recent version of Node.js`);
+
+  const languageNames = new Intl.DisplayNames(language, { type: 'language' });
+
+  return (spLanguagesString: string) => {
+    const enSpLanguages = spLanguagesString.split(enInfo.separator);
+    const spLanguages: string[] = [];
+
+    for (const spLanguage of enSpLanguages) {
+      let key = getKey(enInfo, spLanguage, 'languages');
+      if (key != null) {
+        spLanguages.push(getString(key) || languageNames.of(key.slice(10))!);
+        continue;
+      }
+
+      const partialRegex = new RegExp(`^${nestedProperty(enInfo, 'languages.partial').replace('<language>', '(.+)')}$`, 'i');
+      const partialMatch = spLanguage.match(partialRegex);
+
+      if (
+        partialMatch == null ||
+        (key = getKey(enInfo, partialMatch[1], 'languages')) == null
+      ) {
+        // For VINXIS in https://github.com/ppy/osu-wiki/pull/5068
+        if (spLanguage.toLowerCase() !== 'some english')
+          warning(`Language key not found for "${spLanguage}"`);
+
+        continue;
+      }
+
+      spLanguages.push(
+        (language === 'fr' && frLowercaseVowels.has(partialMatch[1].charAt(0).toLowerCase())
+          ? getString('languages.partial_vowel_prefix') || getString('languages.partial')
+          : getString('languages.partial')
+        )
+          .replace('<language>', getString(key) || languageNames.of(key.slice(10))!),
+      );
+    }
+
+    return upperCaseFirst(spLanguages.join(getString('separator')));
+  }
 }
 
-function spLanguageReplacer(englishInfo: GroupYaml, getString: GroupYamlGetString, language: string) {
-    if (Intl.DisplayNames.supportedLocalesOf(language).length === 0)
-        error(`Missing Node.js language support for ${language}. Make sure you are using a recent version of Node.js`);
+function getYamlValuesReplacer(enInfo: GroupYaml, getString: GroupYamlGetString, scope: NestedScopesFor<GroupYaml>, keepAcronyms?: boolean) {
+  return (values: string) => upperCaseFirst(
+    values
+      .split(enInfo.separator)
+      .map((value) => {
+        const key = getKey(enInfo, value, scope);
 
-    const languageNames = new Intl.DisplayNames(language, { type: 'language' });
+        if (key == null) {
+          if (keepAcronyms && value === value.toUpperCase()) {
+            return value;
+          }
 
-    return (spLanguagesString: string) => {
-        const englishSpLanguages = spLanguagesString.split(englishInfo.separator);
-        const spLanguages: string[] = [];
-
-        for (const spLanguage of englishSpLanguages) {
-            let key = getKey(englishInfo, spLanguage, 'languages');
-            if (key != null) {
-                spLanguages.push(getString(key) || languageNames.of(key.slice(10))!);
-                continue;
-            }
-
-            const partialRegex = new RegExp(`^${nestedProperty(englishInfo, 'languages.partial').replace('<language>', '(.+)')}$`, 'i');
-            const partialMatch = spLanguage.match(partialRegex);
-
-            if (
-                partialMatch == null ||
-                (key = getKey(englishInfo, partialMatch[1], 'languages')) == null
-            ) {
-                // For VINXIS in https://github.com/ppy/osu-wiki/pull/5068
-                if (spLanguage.toLowerCase() !== 'some english')
-                    warning(`Language key not found for "${spLanguage}"`);
-
-                continue;
-            }
-
-            spLanguages.push(
-                getPartialString(getString, language, partialMatch[1])
-                    .replace('<language>', getString(key) || languageNames.of(key.slice(10))!),
-            );
+          throw `Key not found for ${value}`;
         }
 
-        return upperCaseFirst(spLanguages.join(getString('separator')));
-    }
+        return getString(key);
+      })
+      .join(getString('separator')),
+  );
 }
 
-const updateBnTranslation: Translator = function (englishInfo, englishBn, getString, language, teamPath) {
-    const bnFilename = join(teamPath, `Beatmap_Nominators/${language}.md`);
-
-    if (!existsSync(bnFilename))
-        return;
-
-    const bn = replaceLineEndings(readFileSync(bnFilename, 'utf8'));
-    const tableHeadersMatch = bn.content.match(/^\| :-- \| :-- \|$/gm);
-
-    if (tableHeadersMatch == null || tableHeadersMatch.length !== 8) {
-        warning(`${language} BN page formatting is too old, skipping`);
-        return;
-    }
-
-    for (const tableMatch of englishBn.matchAll(/\| :-- \| :-- \|\n((?:\|.+\n)+)/g)) {
-        let table = tableMatch[1];
-
-        table = table.replace(/(?<=^\|.+?\| ).+(?= \|$)/gm, spLanguageReplacer(englishInfo, getString, language));
-
-        // "REMOVE_ME" is a hacky way to step through tables in the
-        // translation by breaking the match as it goes. After all the
-        // replacements are done, we delete all instances of "REMOVE_ME"
-        bn.content = bn.content.replace(/(?<=\| :-- \| :-- \|\n)(?:\|.+\n)+/, `REMOVE_ME${table}`);
-    }
-
-    bn.content = bn.content.replace(/REMOVE_ME/g, '');
-
-    writeFileSync(bnFilename, replaceLineEndings(bn));
+const enum TranslateError {
+  EnStructure,
+  Structure,
 }
 
-const updateGmtTranslation: Translator = function (englishInfo, englishGmt, getString, language, teamPath) {
-    const gmtFilename = join(teamPath, `Global_Moderation_Team/${language}.md`);
-
-    if (!existsSync(gmtFilename))
-        return;
-
-    const gmt = replaceLineEndings(readFileSync(gmtFilename, 'utf8'));
-    const tableHeadersMatch = gmt.content.match(/^\| :-- \| :-- \| :-- \|$/gm);
-
-    if (tableHeadersMatch == null || tableHeadersMatch.length !== 2) {
-        warning(`${language} GMT page formatting is too old, skipping`);
-        return;
-    }
-
-    const table = englishGmt.match(/\| :-- \| :-- \| :-- \|\n((?:\|.+\n)+)/)![1]
-        .replace(/(?<=^\|.+?\| ).+(?= \|.+?\|$)/gm, spLanguageReplacer(englishInfo, getString, language))
-        .replace(/(?<=^\|.+?\|.+?\| ).+(?= \|$)/gm, areasString =>
-            upperCaseFirst(
-                areasString
-                    .split(englishInfo.separator)
-                    .map((area) => {
-                        const key = getKey(englishInfo, area, 'gmt.areas');
-
-                        if (key == null)
-                            throw `Key not found for ${area}`;
-
-                        return getString(key);
-                    })
-                    .join(getString('separator'))
-            )
-        );
-
-    // "REMOVE_ME" is a hacky way to step through tables in the
-    // translation by breaking the match as it goes. After all the
-    // replacements are done, we delete all instances of "REMOVE_ME"
-    gmt.content = gmt.content.replace(/(?<=\| :-- \| :-- \| :-- \|\n)(?:\|.+\n)+/, `REMOVE_ME${table}`);
-
-    const table2 = englishGmt.match(/\| :-- \| :-- \| :-- \|\n(?:.|\n)+?\| :-- \| :-- \| :-- \|\n((?:\|.+\n)+)/)![1]
-        .replace(`| *${upperCaseFirst(englishInfo.gmt.all_mods)}* |`, `| *${upperCaseFirst(getString('gmt.all_mods'))}* |`);
-
-    gmt.content = gmt.content.replace(/(?<=\| :-- \| :-- \| :-- \|\n)(?:\|.+\n)+/, table2);
-    gmt.content = gmt.content.replace(/REMOVE_ME/g, '');
-
-    writeFileSync(gmtFilename, replaceLineEndings(gmt));
+interface Group {
+  directory: string;
+  optionRegex: RegExp;
+  translate: (content: string, enContent: string, helpers: {
+    enInfo: GroupYaml;
+    getString: GroupYamlGetString;
+    spLanguageReplacer: (spLanguagesString: string) => string;
+  }) => string | TranslateError;
 }
 
-const updateNatTranslation: Translator = function (englishInfo, englishNat, getString, language, teamPath) {
-    const natFilename = join(teamPath, `Nomination_Assessment_Team/${language}.md`);
+const groups: Group[] = [
+  {
+    directory: 'Beatmap_Nominators',
+    optionRegex: /bng?|nominator/i,
+    translate: (content, enContent, { spLanguageReplacer }) => {
+      const enHeaderMatches = [...enContent.matchAll(/^###? .+/gm)];
 
-    if (!existsSync(natFilename))
-        return;
+      if (enHeaderMatches.length !== 7) {
+        return TranslateError.EnStructure;
+      }
 
-    const nat = replaceLineEndings(readFileSync(natFilename, 'utf8'));
-    const tableHeadersMatch = nat.content.match(/^\| :-- \| :-- \| :-- \|$/gm);
+      const headerMatches = [...content.matchAll(/^###? .+/gm)];
+      const tableHeaderMatch = content.match(/^\|.+\n\| :-- \| :-- \|$/m);
 
-    if (tableHeadersMatch == null || tableHeadersMatch.length !== 4) {
-        warning(`${language} NAT page formatting is too old, skipping`);
-        return;
+      if (headerMatches.length !== enHeaderMatches.length || tableHeaderMatch == null) {
+        return TranslateError.Structure;
+      }
+
+      const tables = [4, 5].map(
+        (headerIndex) => enContent
+          .slice(
+            enHeaderMatches[headerIndex].index! + enHeaderMatches[headerIndex][0].length,
+            enHeaderMatches[headerIndex + 1].index!,
+          )
+          .replaceAll(/^\|.+\n\| :-- \| :-- \|$/gm, tableHeaderMatch[0])
+          .replaceAll(/(?<=^\| ::\{[^\|]+\| ).+(?= \|$)/gm, spLanguageReplacer),
+      );
+
+      return (
+        content.slice(0, headerMatches[4].index! + headerMatches[4][0].length) +
+        tables[0] +
+        content.slice(headerMatches[5].index!, headerMatches[5].index! + headerMatches[5][0].length) +
+        tables[1] +
+        content.slice(headerMatches[6].index!)
+      );
     }
+  },
+  {
+    directory: 'Global_Moderation_Team',
+    optionRegex: /gmt|mod/i,
+    translate: (content, enContent, { enInfo, getString, spLanguageReplacer }) => {
+      const enTableMatches = [...enContent.matchAll(/(?<=^\| :-- \| :-- \| :-- \|\n)(?:\|.+\n)+/gm)];
 
-    for (const tableMatch of englishNat.matchAll(/\| :-- \| :-- \| :-- \|\n((?:\|.+\n)+)/g)) {
-        let table = tableMatch[1];
+      if (enTableMatches.length !== 2) {
+        return TranslateError.EnStructure;
+      }
 
-        table = table.replace(/(?<=^\|.+?\| ).+(?= \|.+?\|$)/gm, spLanguageReplacer(englishInfo, getString, language));
-        table = table.replace(/(?<=^\|.+?\|.+?\| ).+(?= \|$)/gm, areasString =>
-            upperCaseFirst(
-                areasString
-                    .split(englishInfo.separator)
-                    .map(area => {
-                        const key = getKey(englishInfo, area, 'nat.areas');
+      const tableMatches = [...content.matchAll(/(?<=^\| :-- \| :-- \| :-- \|\n)(?:\|.+\n)+/gm)];
 
-                        if (key == null)
-                            throw `Key not found for ${area}`;
+      if (tableMatches.length !== enTableMatches.length) {
+        return TranslateError.Structure;
+      }
 
-                        return getString(key);
-                    })
-                    .join(getString('separator'))
-            )
-        );
+      const table1 = enTableMatches[0][0].replaceAll(
+        /(?<=^\|[^\|]+\| )((?:(?! \|).)*) \| ((?:(?! \|).)*)/gm,
+        (_, spLanguages: string, areas: string) =>
+          (spLanguages && spLanguageReplacer(spLanguages)) +
+          ' | ' +
+          (areas && getYamlValuesReplacer(enInfo, getString, 'gmt.areas')(areas)),
+      );
+      const table2 = enTableMatches[1][0].replace(
+        `| *${upperCaseFirst(enInfo.gmt.all_mods)}* |`,
+        `| *${upperCaseFirst(getString('gmt.all_mods'))}* |`,
+      );
 
-        // "REMOVE_ME" is a hacky way to step through tables in the
-        // translation by breaking the match as it goes. After all the
-        // replacements are done, we delete all instances of "REMOVE_ME"
-        nat.content = nat.content.replace(/(?<=\| :-- \| :-- \| :-- \|\n)(?:\|.+\n)+/, `REMOVE_ME${table}`);
-    }
+      return (
+        content.slice(0, tableMatches[0].index!) +
+        table1 +
+        content.slice(tableMatches[0].index! + tableMatches[0][0].length, tableMatches[1].index!) +
+        table2 +
+        content.slice(tableMatches[1].index! + tableMatches[1][0].length)
+      );
+    },
+  },
+  {
+    directory: 'Nomination_Assessment_Team',
+    optionRegex: /nat|nomination assess/i,
+    translate: (content, enContent, { enInfo, getString, spLanguageReplacer }) => {
+      const enTableMatches = [...enContent.matchAll(/(?<=^\| :-- \| :-- \| :-- \|\n)(?:\|.+\n)+/gm)];
 
-    nat.content = nat.content.replace(/REMOVE_ME/g, '');
+      if (enTableMatches.length !== 4) {
+        return TranslateError.EnStructure;
+      }
 
-    writeFileSync(natFilename, replaceLineEndings(nat));
-}
+      const tableMatches = [...content.matchAll(/(?<=^\| :-- \| :-- \| :-- \|\n)(?:\|.+\n)+/gm)];
 
-const updateAluTranslation: Translator = function (englishInfo, englishAlu, getString, language, teamPath) {
-    const aluFilename = join(teamPath, `osu!_Alumni/${language}.md`);
+      if (tableMatches.length !== enTableMatches.length) {
+        return TranslateError.Structure;
+      }
 
-    if (!existsSync(aluFilename))
-        return;
+      const tables = enTableMatches.map(([enTable]) => enTable.replaceAll(
+        /(?<=^\|[^\|]+\| )((?:(?! \|).)*) \| ((?:(?! \|).)*)/gm,
+        (_, spLanguages: string, areas: string) =>
+          (spLanguages && spLanguageReplacer(spLanguages)) +
+          ' | ' +
+          (areas && getYamlValuesReplacer(enInfo, getString, 'nat.areas')(areas)),
+      ));
 
-    const alu = replaceLineEndings(readFileSync(aluFilename, 'utf8'));
-    const tableHeadersMatch = alu.content.match(/^\| :-- \| :-- \|$/gm);
+      let translation = content.slice(0, tableMatches[0].index!);
+      tables.forEach((table, i) => {
+        translation += table
+          + content.slice(tableMatches[i].index! + tableMatches[i][0].length, tableMatches[i + 1]?.index);
+      });
+      return translation;
+    },
+  },
+  {
+    directory: 'osu!_Alumni',
+    optionRegex: /alu|alm/i,
+    translate: (content, enContent, { enInfo, getString }) => {
+      const enTableMatch = enContent.match(/(?<=^\| :-- \| :-- \|\n)(?:\|.+\n)+/m);
 
-    if (tableHeadersMatch == null || tableHeadersMatch.length !== 1) {
-        warning(`${language} osu! Alumni page formatting is too old, skipping`);
-        return;
-    }
+      if (enTableMatch == null) {
+        return TranslateError.EnStructure;
+      }
 
-    const table = englishAlu.match(/\| :-- \| :-- \|\n((?:\|.+\n)+)/)![1]
-        .replace(/(?<=^\|.+?\| ).+(?= \|$)/gm, rolesString =>
-            upperCaseFirst(
-                rolesString
-                    .split(englishInfo.separator)
-                    .map((role) => {
-                        const key = getKey(englishInfo, role, 'alumni.roles');
+      const tableMatch = content.match(/(?<=^\| :-- \| :-- \|\n)(?:\|.+\n)+/m);
 
-                        if (key == null) {
-                            if (role === role.toUpperCase())
-                                return role;
+      if (tableMatch == null) {
+        return TranslateError.Structure;
+      }
 
-                            throw `Key not found for ${role}`;
-                        }
+      return (
+        content.slice(0, tableMatch.index!) +
+        enTableMatch[0].replaceAll(
+          /(?<=^\|[^\|]+\| ).+(?= \|$)/gm,
+          getYamlValuesReplacer(enInfo, getString, 'alumni.roles', true),
+        ) +
+        content.slice(tableMatch.index! + tableMatch[0].length)
+      );
+    },
+  },
+  {
+    directory: 'Support_Team',
+    optionRegex: /sup/i,
+    translate: (content, enContent, { spLanguageReplacer }) => {
+      const enTableMatch = enContent.match(/(?<=^\| :-- \| :-- \|\n)(?:\|.+\n)+/m);
 
-                        return getString(key);
-                    })
-                    .join(getString('separator'))
-            )
-        );
+      if (enTableMatch == null) {
+        return TranslateError.EnStructure;
+      }
 
-    alu.content = alu.content.replace(/(?<=\| :-- \| :-- \|\n)(?:\|.+\n)+/, table);
+      const tableMatch = content.match(/(?<=^\| :-- \| :-- \|\n)(?:\|.+\n)+/m);
 
-    writeFileSync(aluFilename, replaceLineEndings(alu));
-}
+      if (tableMatch == null) {
+        return TranslateError.Structure;
+      }
 
-const updateSupTranslation: Translator = function (englishInfo, englishSup, getString, language, teamPath) {
-    const supFilename = join(teamPath, `Support_Team/${language}.md`);
-
-    if (!existsSync(supFilename))
-        return;
-
-    const sup = replaceLineEndings(readFileSync(supFilename, 'utf8'));
-    const tableHeadersMatch = sup.content.match(/^\| :-- \| :-- \|$/gm);
-
-    if (tableHeadersMatch == null || tableHeadersMatch.length !== 1) {
-        warning(`${language} Support Team page formatting is too old, skipping`);
-        return;
-    }
-
-    const table = englishSup.match(/\| :-- \| :-- \|\n((?:\|.+\n)+)/)![1]
-        .replace(/(?<=^\|.+?\| ).+(?= \|$)/gm, spLanguageReplacer(englishInfo, getString, language));
-
-    sup.content = sup.content
-        .replace(/(?<=\| :-- \| :-- \|\n)(?:\|.+\n)+/, table);
-
-    writeFileSync(supFilename, replaceLineEndings(sup));
-}
+      return (
+        content.slice(0, tableMatch.index!) +
+        enTableMatch[0].replaceAll(/(?<=^\|[^\|]+\| ).+(?= \|$)/gm, spLanguageReplacer) +
+        content.slice(tableMatch.index! + tableMatch[0].length)
+      );
+    },
+  },
+];
 
 export function translateGroups(options: TranslateGroupsOptions) {
-    const metaPath = join(wikiPath, 'meta/group-info');
-    const teamPath = join(wikiPath, 'wiki/People/The_Team');
-    const englishInfo = yaml(readFileSync(join(metaPath, 'en.yaml'), 'utf8')) as GroupYaml;
+  const metaPath = join(wikiPath, 'meta/group-info');
+  const teamPath = join(wikiPath, 'wiki/People/The_Team');
+  const enInfo = yaml(readFileSync(join(metaPath, 'en.yaml'), 'utf8')) as GroupYaml;
+  const checkGroups = groups
+    .filter((group) => options.group?.some((g) => group.optionRegex.test(g)) ?? true)
+    .map((group) => ({
+      ...group,
+      enContent: readFileSync(join(teamPath, group.directory, 'en.md'), 'utf8')
+        .replaceAll(/\r\n|\r|\n/g, '\n')
+        .replaceAll('<!-- TODO -->', ''),
+      skip: false,
+    }));
 
-    const englishBn = replaceLineEndings(readFileSync(join(teamPath, 'Beatmap_Nominators/en.md'), 'utf8')).content.replace(/<!-- TODO -->/g, '');
-    const englishGmt = replaceLineEndings(readFileSync(join(teamPath, 'Global_Moderation_Team/en.md'), 'utf8')).content.replace(/<!-- TODO -->/g, '');
-    const englishNat = replaceLineEndings(readFileSync(join(teamPath, 'Nomination_Assessment_Team/en.md'), 'utf8')).content.replace(/<!-- TODO -->/g, '');
-    const englishAlu = replaceLineEndings(readFileSync(join(teamPath, 'osu!_Alumni/en.md'), 'utf8')).content.replace(/<!-- TODO -->/g, '');
-    const englishSup = replaceLineEndings(readFileSync(join(teamPath, 'Support_Team/en.md'), 'utf8')).content.replace(/<!-- TODO -->/g, '');
-
-    // TODO lol
-    const checkAllGroups = options.group == null;
-    const checkGroups = {
-        alu: checkAllGroups || options.group!.some(g => g.match(/alu|alm/i)),
-        bng: checkAllGroups || options.group!.some(g => g.match(/bng?|nominator/i)),
-        gmt: checkAllGroups || options.group!.some(g => g.match(/gmt|mod/i)),
-        nat: checkAllGroups || options.group!.some(g => g.match(/nat|nomination assessment/i)),
-        sup: checkAllGroups || options.group!.some(g => g.match(/sup/i)),
-    };
-
-    for (const groupInfoFilename of readdirSync(metaPath)) {
-        if (groupInfoFilename === 'en.yaml')
-            continue;
-
-        const groupInfoFilenameMatch = groupInfoFilename.match(/^([a-z]{2}(?:-[a-z]{2})?)\.yaml$/);
-
-        if (groupInfoFilenameMatch == null)
-            continue;
-
-        const groupInfo = yaml(readFileSync(join(metaPath, groupInfoFilename), 'utf8')) as Partial<GroupYaml>;
-
-        // if (groupInfo.outdated_translation)
-        //     continue;
-
-        const language = groupInfoFilenameMatch[1];
-        const getString: GroupYamlGetString =
-            (key) => nestedProperty(groupInfo, key) ||
-                (key.startsWith('languages.') && key !== 'languages.partial' ? '' : nestedProperty(englishInfo, key));
-
-        if (checkGroups.alu)
-            updateAluTranslation(englishInfo, englishAlu, getString, language, teamPath);
-
-        if (checkGroups.bng)
-            updateBnTranslation(englishInfo, englishBn, getString, language, teamPath);
-
-        if (checkGroups.gmt)
-            updateGmtTranslation(englishInfo, englishGmt, getString, language, teamPath);
-
-        if (checkGroups.nat)
-            updateNatTranslation(englishInfo, englishNat, getString, language, teamPath);
-
-        if (checkGroups.sup)
-            updateSupTranslation(englishInfo, englishSup, getString, language, teamPath);
+  for (const groupInfoFilename of readdirSync(metaPath)) {
+    if (groupInfoFilename === 'en.yaml') {
+      continue;
     }
+
+    const groupInfoFilenameMatch = groupInfoFilename.match(/^([a-z]{2}(?:-[a-z]{2})?)\.yaml$/);
+
+    if (groupInfoFilenameMatch == null) {
+      continue;
+    }
+
+    const groupInfo = yaml(readFileSync(join(metaPath, groupInfoFilename), 'utf8')) as Partial<GroupYaml>;
+    const language = groupInfoFilenameMatch[1];
+    const getString: GroupYamlGetString =
+      (key) => nestedProperty(groupInfo, key) ||
+        (key.startsWith('languages.') && key !== 'languages.partial' ? '' : nestedProperty(enInfo, key));
+    const spLanguageReplacer = getSpLanguageReplacer(enInfo, getString, language);
+
+    for (const group of checkGroups) {
+      if (group.skip) {
+        continue;
+      }
+
+      const path = join(teamPath, group.directory, `${language}.md`);
+
+      if (!existsSync(path)) {
+        continue;
+      }
+
+      const content = readFileSync(path, 'utf8');
+      const translateResult = group.translate(content.replaceAll(/\r\n|\r|\n/g, '\n'), group.enContent, {
+        enInfo,
+        getString,
+        spLanguageReplacer,
+      });
+
+      if (translateResult === TranslateError.EnStructure) {
+        error(`The structure of the EN ${group.directory} article has changed since translate-groups was last updated. Ask clayton to update this program`);
+        group.skip = true;
+        continue;
+      }
+
+      if (translateResult === TranslateError.Structure) {
+        warning(`The structure of the ${language.toUpperCase()} ${group.directory} article does not match EN, skipping`);
+        continue;
+      }
+
+      writeFileSync(path, translateResult.replaceAll('\n', content.match(/\r\n|\r|\n/)?.[0] ?? '\n'));
+    }
+  }
 }
 
 export function translateGroupsCommandBuilder() {
-    return new Command('translate-groups')
-        .description('Update translations of user lists in group articles')
-        .option('-g, --group <groups...>', 'Restrict to specific groups')
-        .action(translateGroups);
+  return new Command('translate-groups')
+    .description('Update translations of user lists in group articles')
+    .option('-g, --group <groups...>', 'Restrict to specific groups')
+    .action(translateGroups);
 }

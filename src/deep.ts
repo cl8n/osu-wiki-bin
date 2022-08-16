@@ -5,7 +5,7 @@ export type NestedKeyFor<T, V = boolean | number | string | null | undefined> =
     }[keyof T]
     : never;
 
-type NestedScopesFor<T> =
+export type NestedScopesFor<T> =
     keyof T extends string
     ? {
         [K in keyof Required<T>]: T[K] extends boolean | number | string | null | undefined
