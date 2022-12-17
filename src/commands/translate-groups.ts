@@ -21,7 +21,7 @@ type GroupYaml = {
     areas: Record<string, string>;
   };
   nat: {
-    areas: Record<string, string>;
+    subgroups: Record<string, string>;
   };
   languages: Record<string, string>;
 };
@@ -87,22 +87,33 @@ function getSpLanguageReplacer(enInfo: GroupYaml, getString: GroupYamlGetString,
   }
 }
 
-function getYamlValuesReplacer(enInfo: GroupYaml, getString: GroupYamlGetString, scope: NestedScopesFor<GroupYaml>, keepAcronyms?: boolean) {
+function getYamlValuesReplacer(enInfo: GroupYaml, getString: GroupYamlGetString, scope: NestedScopesFor<GroupYaml>, content: string, keepAcronyms?: boolean) {
   return (values: string) => upperCaseFirst(
     values
       .split(enInfo.separator)
       .map((value) => {
-        const key = getKey(enInfo, value, scope);
+        const valueWithoutNotes = value.replaceAll(/(?:\[\^[^\]]+\])+$/g, '');
+        const key = getKey(enInfo, valueWithoutNotes, scope);
+        let newValue;
 
         if (key == null) {
-          if (keepAcronyms && value === value.toUpperCase()) {
-            return value;
+          if (!keepAcronyms || valueWithoutNotes !== valueWithoutNotes.toUpperCase()) {
+            throw `Key not found for ${valueWithoutNotes}`;
           }
 
-          throw `Key not found for ${value}`;
+          newValue = valueWithoutNotes;
+        } else {
+          newValue = getString(key);
         }
 
-        return getString(key);
+        const newNotes = value
+          .slice(valueWithoutNotes.length)
+          .match(/\[\^[^\]]+\]/g)
+          ?.filter((note) => content.includes(note))
+          .join('')
+          ?? '';
+
+        return newValue + newNotes;
       })
       .join(getString('separator')),
   );
@@ -181,7 +192,7 @@ const groups: Group[] = [
         (_, spLanguages: string, areas: string) =>
           (spLanguages && spLanguageReplacer(spLanguages)) +
           ' | ' +
-          (areas && getYamlValuesReplacer(enInfo, getString, 'gmt.areas')(areas)),
+          (areas && getYamlValuesReplacer(enInfo, getString, 'gmt.areas', content)(areas)),
       );
       const table2 = enTableMatches[1][0].replace(
         `| *${upperCaseFirst(enInfo.gmt.all_mods)}* |`,
@@ -215,10 +226,10 @@ const groups: Group[] = [
 
       const tables = enTableMatches.map(([enTable]) => enTable.replaceAll(
         /(?<=^\|[^\|]+\| )((?:(?! \|).)*) \| ((?:(?! \|).)*)/gm,
-        (_, spLanguages: string, areas: string) =>
+        (_, spLanguages: string, subgroup: string) =>
           (spLanguages && spLanguageReplacer(spLanguages)) +
           ' | ' +
-          (areas && getYamlValuesReplacer(enInfo, getString, 'nat.areas')(areas)),
+          (subgroup && getYamlValuesReplacer(enInfo, getString, 'nat.subgroups', content)(subgroup)),
       ));
 
       let translation = content.slice(0, tableMatches[0].index!);
@@ -249,7 +260,7 @@ const groups: Group[] = [
         content.slice(0, tableMatch.index!) +
         enTableMatch[0].replaceAll(
           /(?<=^\|[^\|]+\| ).+(?= \|$)/gm,
-          getYamlValuesReplacer(enInfo, getString, 'alumni.roles', true),
+          getYamlValuesReplacer(enInfo, getString, 'alumni.roles', content, true),
         ) +
         content.slice(tableMatch.index! + tableMatch[0].length)
       );
