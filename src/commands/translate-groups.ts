@@ -69,7 +69,7 @@ function getSpLanguageReplacer(enInfo: GroupYaml, getString: GroupYamlGetString,
       ) {
         // For VINXIS in https://github.com/ppy/osu-wiki/pull/5068
         if (spLanguage.toLowerCase() !== 'some english')
-          warning(`Language key not found for "${spLanguage}"`);
+          warning(`Language key not found for "${spLanguage}". If intentional, please add it to en.yaml.`);
 
         continue;
       }
@@ -98,7 +98,7 @@ function getYamlValuesReplacer(enInfo: GroupYaml, getString: GroupYamlGetString,
 
         if (key == null) {
           if (!keepAcronyms || valueWithoutNotes !== valueWithoutNotes.toUpperCase()) {
-            throw `Key not found for ${valueWithoutNotes}`;
+            throw `Language key not found for "${valueWithoutNotes}". If intentional, please add it to en.yaml.`;
           }
 
           newValue = valueWithoutNotes;
@@ -293,13 +293,13 @@ const groups: Group[] = [
 
 export function translateGroups(options: TranslateGroupsOptions) {
   const metaPath = join(wikiPath, 'meta/group-info');
-  const teamPath = join(wikiPath, 'wiki/People/The_Team');
+  const peoplePath = join(wikiPath, 'wiki/People');
   const enInfo = yaml(readFileSync(join(metaPath, 'en.yaml'), 'utf8')) as GroupYaml;
   const checkGroups = groups
     .filter((group) => options.group?.some((g) => group.optionRegex.test(g)) ?? true)
     .map((group) => ({
       ...group,
-      enContent: readFileSync(join(teamPath, group.directory, 'en.md'), 'utf8')
+      enContent: readFileSync(join(peoplePath, group.directory, 'en.md'), 'utf8')
         .replaceAll(/\r\n|\r|\n/g, '\n')
         .replaceAll('<!-- TODO -->', ''),
       skip: false,
@@ -328,7 +328,7 @@ export function translateGroups(options: TranslateGroupsOptions) {
         continue;
       }
 
-      const path = join(teamPath, group.directory, `${language}.md`);
+      const path = join(peoplePath, group.directory, `${language}.md`);
 
       if (!existsSync(path)) {
         continue;
