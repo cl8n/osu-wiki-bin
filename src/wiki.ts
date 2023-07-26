@@ -6,12 +6,10 @@ import { warning } from './console.js';
 
 interface OsuWikiConfig {
     osuApiKey?: string;
-    qatApiKey?: string;
 }
 
 const blankConfig: Required<Empty<OsuWikiConfig>> = {
     osuApiKey: '',
-    qatApiKey: '',
 };
 
 // TODO: error checking... and has to be called after loadWikiPath
