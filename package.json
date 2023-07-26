@@ -1,6 +1,6 @@
 {
   "name": "osu-wiki",
-  "version": "0.18.1",
+  "version": "0.19.0",
   "author": "clayton <me@clayton.cc>",
   "bugs": "https://github.com/cl8n/osu-wiki-bin/issues",
   "description": "Tools for osu! wiki contributors",
