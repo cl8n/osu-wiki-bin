@@ -2,26 +2,23 @@ import { get } from 'https';
 
 // TODO types
 
-export async function groupMembers(groupId: string): Promise<string[]> {
-    const userSearch = /","id":(\d+),"is_active":/g;
-    const url = `https://osu.ppy.sh/groups/${groupId}?sort=username`;
-    let data = await new Promise<string>((resolve, reject) => {
-        get(url, res => {
+export async function groupMembers(groupId: number): Promise<any> {
+    const data = await new Promise<string>((resolve, reject) => {
+        get(`https://osu.ppy.sh/groups/${groupId}?sort=username`, (res) => {
             let data = '';
-            res.on('data', chunk => data += chunk);
+
+            res.on('data', (chunk) => data += chunk);
             res.on('end', () => resolve(data));
-        }).on('error', err => reject(err.message));
+        })
+            .on('error', (error) => reject(error.message));
     });
 
-    data = data.substring(data.indexOf('id="json-users"'));
+    const scriptStart = '<script id="json-users" type="application/json">';
+    const scriptEnd = '</script>';
+    const scriptIndex = data.indexOf(scriptStart) + scriptStart.length;
+    const script = data.slice(scriptIndex, data.indexOf(scriptEnd, scriptIndex));
 
-    const userIds: string[] = [];
-    let match: RegExpExecArray | null;
-
-    while ((match = userSearch.exec(data)) !== null)
-        userIds.push(match[1]);
-
-    return userIds;
+    return JSON.parse(script);
 }
 
 export async function scrapeUser(userId: string): Promise<any> {
