@@ -5,8 +5,8 @@ import { error, info, success, warning } from '../console.js';
 import { gitFileList } from '../git.js';
 import { run } from '../process.js';
 import { wikiPath } from '../wiki.js';
+import { checkRedirects } from './check-redirects.js';
 import { findBrokenRefs } from './find-broken-refs.js';
-import { findRedundantRedirects } from './find-redundant-redirects.js';
 
 async function sandbox(action: () => Promise<void> | void): Promise<void> {
     try {
@@ -66,8 +66,8 @@ export async function lint(paths: string[]): Promise<void> {
             success('No changes since master', true);
         }
 
-        info('find-redundant-redirects:');
-        await sandbox(findRedundantRedirects);
+        info('check-redirects:');
+        await sandbox(checkRedirects);
         info('');
     }
 
