@@ -342,7 +342,7 @@ export function translateGroups(options: TranslateGroupsOptions) {
       });
 
       if (translateResult === TranslateError.EnStructure) {
-        error(`The structure of the EN ${group.directory} article has changed since translate-groups was last updated. Ask clayton to update this program`);
+        error(`The structure of the EN ${group.directory} article has changed since this command was last updated. Ask clayton to update it`);
         group.skip = true;
         continue;
       }
