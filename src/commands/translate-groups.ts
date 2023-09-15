@@ -67,10 +67,7 @@ function getSpLanguageReplacer(enInfo: GroupYaml, getString: GroupYamlGetString,
         partialMatch == null ||
         (key = getKey(enInfo, partialMatch[1], 'languages')) == null
       ) {
-        // For VINXIS in https://github.com/ppy/osu-wiki/pull/5068
-        if (spLanguage.toLowerCase() !== 'some english')
-          warning(`Language key not found for "${spLanguage}". If intentional, please add it to en.yaml.`);
-
+        warning(`Language key not found for "${spLanguage}". If intentional, please add it to en.yaml.`);
         continue;
       }
 
