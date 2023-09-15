@@ -90,17 +90,20 @@ function getYamlValuesReplacer(enInfo: GroupYaml, getString: GroupYamlGetString,
       .split(enInfo.separator)
       .map((value) => {
         const valueWithoutNotes = value.replaceAll(/(?:\[\^[^\]]+\])+$/g, '');
-        const key = getKey(enInfo, valueWithoutNotes, scope);
-        let newValue;
+        let newValue = '';
 
-        if (key == null) {
-          if (!keepAcronyms || valueWithoutNotes !== valueWithoutNotes.toUpperCase()) {
-            throw `Language key not found for "${valueWithoutNotes}". If intentional, please add it to en.yaml.`;
+        if (valueWithoutNotes.length > 0) {
+          const key = getKey(enInfo, valueWithoutNotes, scope);
+
+          if (key == null) {
+            if (keepAcronyms && valueWithoutNotes === valueWithoutNotes.toUpperCase()) {
+              newValue = valueWithoutNotes;
+            } else {
+              warning(`Language key not found for "${valueWithoutNotes}". If intentional, please add it to en.yaml.`);
+            }
+          } else {
+            newValue = getString(key);
           }
-
-          newValue = valueWithoutNotes;
-        } else {
-          newValue = getString(key);
         }
 
         const newNotes = value
