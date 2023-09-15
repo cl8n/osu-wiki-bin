@@ -141,7 +141,7 @@ const groups: Group[] = [
     translate: (content, enContent, { spLanguageReplacer }) => {
       const enHeaderMatches = [...enContent.matchAll(/^###? .+/gm)];
 
-      if (enHeaderMatches.length !== 7) {
+      if (enHeaderMatches.length !== 8) {
         return TranslateError.EnStructure;
       }
 
