@@ -50,6 +50,10 @@ function getSpLanguageReplacer(enInfo: GroupYaml, getString: GroupYamlGetString,
   const languageNames = new Intl.DisplayNames(language, { type: 'language' });
 
   return (spLanguagesString: string) => {
+    if (spLanguagesString.length === 0) {
+      return '';
+    }
+
     const enSpLanguages = spLanguagesString.split(enInfo.separator);
     const spLanguages: string[] = [];
 
@@ -85,7 +89,7 @@ function getSpLanguageReplacer(enInfo: GroupYaml, getString: GroupYamlGetString,
 }
 
 function getYamlValuesReplacer(enInfo: GroupYaml, getString: GroupYamlGetString, scope: NestedScopesFor<GroupYaml>, content: string, keepAcronyms?: boolean) {
-  return (values: string) => upperCaseFirst(
+  return (values: string) => values.length === 0 ? '' : upperCaseFirst(
     values
       .split(enInfo.separator)
       .map((value) => {
@@ -190,9 +194,9 @@ const groups: Group[] = [
       const table1 = enTableMatches[0][0].replaceAll(
         /(?<=^\|[^\|]+\| )((?:(?! \|).)*) \| ((?:(?! \|).)*)/gm,
         (_, spLanguages: string, areas: string) =>
-          (spLanguages && spLanguageReplacer(spLanguages)) +
+          spLanguageReplacer(spLanguages) +
           ' | ' +
-          (areas && getYamlValuesReplacer(enInfo, getString, 'gmt.areas', content)(areas)),
+          getYamlValuesReplacer(enInfo, getString, 'gmt.areas', content)(areas),
       );
       const table2 = enTableMatches[1][0].replace(
         `| *${upperCaseFirst(enInfo.gmt.all_mods)}* |`,
@@ -227,9 +231,9 @@ const groups: Group[] = [
       const tables = enTableMatches.map(([enTable]) => enTable.replaceAll(
         /(?<=^\|[^\|]+\| )((?:(?! \|).)*) \| ((?:(?! \|).)*)/gm,
         (_, spLanguages: string, subgroup: string) =>
-          (spLanguages && spLanguageReplacer(spLanguages)) +
+          spLanguageReplacer(spLanguages) +
           ' | ' +
-          (subgroup && getYamlValuesReplacer(enInfo, getString, 'nat.subgroups', content)(subgroup)),
+          getYamlValuesReplacer(enInfo, getString, 'nat.subgroups', content)(subgroup),
       ));
 
       let translation = content.slice(0, tableMatches[0].index!);
