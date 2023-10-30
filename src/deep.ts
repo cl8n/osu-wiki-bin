@@ -30,7 +30,7 @@ type FlattenStackFrame = {
     prefix: string;
 };
 
-export function flattenedEntries<T>(object: T): FlattenedEntries<T> {
+export function flattenedEntries<T extends object>(object: T): FlattenedEntries<T> {
     const entries: [any, any][] = [];
     const stack: FlattenStackFrame[] = [{ keys: Object.keys(object), prefix: '' }];
     let frame: FlattenStackFrame | undefined;
@@ -55,7 +55,7 @@ export function flattenedEntries<T>(object: T): FlattenedEntries<T> {
     return entries;
 }
 
-export function getKey<T, V>(object: T, value: V, scope: NestedScopesFor<T> | '' = ''): NestedKeyFor<T, V> | undefined {
+export function getKey<T extends object, V>(object: T, value: V, scope: NestedScopesFor<T> | '' = ''): NestedKeyFor<T, V> | undefined {
     const entry: any = flattenedEntries(object)
         .find((entry) =>
             entry[0].startsWith(scope) && (

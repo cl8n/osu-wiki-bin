@@ -37,10 +37,10 @@
   },
   "devDependencies": {
     "@cl8n/types": "^1.0.1",
-    "@types/js-yaml": "^4.0.5",
+    "@types/js-yaml": "^4.0.8",
     "@types/mdast": "^4.0.2",
-    "@types/node": "^16.11.48",
-    "@types/update-notifier": "^6.0.1",
+    "@types/node": "^16.18.59",
+    "@types/update-notifier": "^6.0.6",
     "rimraf": "^3.0.2",
     "typescript": "^5.2.2"
   }
