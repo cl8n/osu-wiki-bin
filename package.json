@@ -23,11 +23,13 @@
     "chalk": "^5.3.0",
     "commander": "^9.4.0",
     "js-yaml": "^4.1.0",
+    "unist-util-visit": "^5.0.0",
     "update-notifier": "^6.0.2"
   },
   "devDependencies": {
     "@cl8n/types": "^1.0.1",
     "@types/js-yaml": "^4.0.5",
+    "@types/mdast": "^4.0.2",
     "@types/node": "^16.11.48",
     "@types/update-notifier": "^6.0.1",
     "rimraf": "^3.0.2",

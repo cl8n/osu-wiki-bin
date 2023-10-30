@@ -1,9 +1,9 @@
+import { spawn } from 'child_process';
 import { Command } from 'commander';
-import { existsSync } from 'fs';
 import { join, relative } from 'path';
-import { error, info, success, warning } from '../console.js';
+import { error, info, success } from '../console.js';
 import { gitFileList } from '../git.js';
-import { run } from '../process.js';
+import { getRemarkPath } from '../remark.js';
 import { wikiPath } from '../wiki.js';
 import { checkRedirects } from './check-redirects.js';
 import { findBrokenRefs } from './find-broken-refs.js';
@@ -78,21 +78,27 @@ export async function lint(paths: string[]): Promise<void> {
         excludeOutdated: false,
     }));
 
-    const remarkPath = join(wikiPath, 'node_modules/.bin/remark');
+    const remarkPath = getRemarkPath();
 
-    info('\nRemark:');
+    if (remarkPath != null) {
+        await sandbox(() => {
+            info('\nRemark:');
 
-    if (existsSync(remarkPath)) {
-        await sandbox(() => run(remarkPath, [
-            '--frail',
-            '--no-stdout',
-            '--quiet',
-            '--silently-ignore',
-            '--',
-            ...paths,
-        ]));
-    } else {
-        warning('Remark is not installed in osu-wiki. Run `npm install`.');
+            const child = spawn(
+                remarkPath,
+                [
+                    '--frail',
+                    '--no-stdout',
+                    '--quiet',
+                    '--silently-ignore',
+                    '--',
+                    ...paths,
+                ],
+                { stdio: ['ignore', 'ignore', 'inherit'] },
+            );
+
+            return new Promise((resolve) => child.on('exit', resolve));
+        });
     }
 }
 

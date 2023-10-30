@@ -5,8 +5,11 @@ import { basename, dirname, join } from 'path';
 import { getFiles } from '../files.js';
 import { getRedirects, wikiPath } from '../wiki.js';
 import { error, errorX, warningX } from '../console.js';
-import { getImports, getMdAst } from '../remark.js';
+import { getMdAst } from '../remark.js';
 import { memoize } from '../memoize.js';
+import { EXIT, visit } from 'unist-util-visit';
+import { InclusiveDescendant } from 'unist-util-visit-parents';
+import { Root } from 'mdast';
 
 interface FindBrokenRefsOptions {
     aggregate: boolean;
@@ -14,18 +17,20 @@ interface FindBrokenRefsOptions {
     excludeOutdated: boolean;
 }
 
-function urlsFromNode(node: any): string[] | undefined {
+function urlsFromNode(node: InclusiveDescendant<Root>): string[] | void {
     switch (node.type) {
         case 'definition':
         case 'image':
         case 'link':
-            if (!node.url)
+            if (node.url.length === 0) {
                 return;
+            }
 
             return [node.url];
         case 'html':
-            if (!node.value)
+            if (node.value.length === 0) {
                 return;
+            }
 
             const matches = node.value.matchAll(/<a[^>]*\s+href=(['"])([^\1]*)\1[^>]*>/gi);
             const urls = [];
@@ -38,16 +43,12 @@ function urlsFromNode(node: any): string[] | undefined {
 }
 
 const getMdAstMemoized = memoize(getMdAst);
-const getSlugsMemoized = memoize(getSlugs);
 
-async function getSlugs(mdPath: string): Promise<string[]> {
-    const visit = (await getImports())['unist-util-visit'].visit;
-
-    const mdAst = await getMdAstMemoized(mdPath);
+function getSlugs(mdAst: Root): string[] {
     const sectionSlugLevels: Record<string, number> = {};
     const slugs: string[] = [];
 
-    visit(mdAst, ['heading', 'html'], (node: any) => {
+    visit(mdAst, ['heading', 'html'], (node) => {
         if (node.type === 'html') {
             // TODO: Use rehype to parse this (and other HTML)
             const anchors = node.value.match(/(?<=<a(?=\s)[^>]*?\sid=")[^"]+(?="[^>]*>)/g);
@@ -59,13 +60,13 @@ async function getSlugs(mdPath: string): Promise<string[]> {
             return;
         }
 
-        if (node.depth === 1) {
+        if (node.type !== 'heading' || node.depth === 1) {
             return;
         }
 
         let headingText = '';
 
-        visit(node, ['text'], (node: any) => {
+        visit(node, 'text', (node) => {
             headingText += node.value;
         });
 
@@ -91,15 +92,18 @@ async function getSlugs(mdPath: string): Promise<string[]> {
 
 async function findBrokenRefsForPath(path: string, allowRedirects: boolean, excludeOutdated: boolean): Promise<[number, Set<string>]> {
     const mdAst = await getMdAstMemoized(path);
-    const visit = (await getImports())['unist-util-visit'].visit;
+
+    if (mdAst == null) {
+        throw `Failed to get mdast for ${path}`;
+    }
 
     if (excludeOutdated && !path.endsWith('en.md')) {
         let skip = false;
 
-        visit(mdAst, ['yaml'], (node: { value: string; }) => {
+        visit(mdAst, 'yaml', (node) => {
             if ((yaml(node.value) as Record<string, unknown>).outdated_translation) {
                 skip = true;
-                return false;
+                return EXIT;
             }
         });
 
@@ -110,15 +114,15 @@ async function findBrokenRefsForPath(path: string, allowRedirects: boolean, excl
 
     const urls: string[] = [];
 
-    visit(mdAst, ['definition', 'html', 'image', 'link'], (node: any) => {
+    visit(mdAst, ['definition', 'html', 'image', 'link'], (node) => {
         const nodeUrls = urlsFromNode(node);
 
-        if (nodeUrls) {
+        if (nodeUrls != null) {
             urls.push(...nodeUrls);
         }
     });
 
-    const brokenRefs: Set<string> = new Set();
+    const brokenRefs = new Set<string>();
     const defaultLocaleBasename = basename(path);
     let trailingSlashCount = 0;
 
@@ -193,7 +197,9 @@ async function findBrokenRefsForPath(path: string, allowRedirects: boolean, excl
                 }
             }
 
-            if (!(await getSlugsMemoized(refMdPath)).includes(fragment)) {
+            const refMdAst = await getMdAstMemoized(refMdPath);
+
+            if (refMdAst == null || !getSlugs(refMdAst).includes(fragment)) {
                 brokenRefs.add(url);
                 continue;
             }
@@ -216,7 +222,7 @@ export async function findBrokenRefs(paths: string[], options: FindBrokenRefsOpt
     if (paths.length === 0)
         paths.push('.');
 
-    const brokenRefInfos: { [key: string]: [number, Set<string>] } = {};
+    const brokenRefInfos: Record<string, [number, Set<string>]> = {};
 
     for (const path of await getFiles(paths, 'md'))
         brokenRefInfos[path] = await findBrokenRefsForPath(path, options.allowRedirects, options.excludeOutdated);
