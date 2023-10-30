@@ -5,19 +5,28 @@
   "bugs": "https://github.com/cl8n/osu-wiki-bin/issues",
   "description": "Tools for osu! wiki contributors",
   "keywords": [
+    "osu",
+    "osu-wiki",
     "osu!",
-    "osu! wiki",
-    "osu-wiki"
+    "osu! wiki"
   ],
-  "repository": "github:cl8n/osu-wiki-bin",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cl8n/osu-wiki-bin.git"
+  },
+  "bin": {
+    "osu-wiki": "build/cli.js"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "files": [
+    "build"
+  ],
   "scripts": {
-    "build": "rimraf dist && tsc",
+    "build": "rimraf build && tsc",
     "prepublishOnly": "npm run build"
   },
-  "bin": "dist/cli.js",
-  "files": [
-    "dist"
-  ],
   "type": "module",
   "dependencies": {
     "chalk": "^5.3.0",
@@ -34,8 +43,5 @@
     "@types/update-notifier": "^6.0.1",
     "rimraf": "^3.0.2",
     "typescript": "^5.2.2"
-  },
-  "engines": {
-    "node": ">=16"
   }
 }
