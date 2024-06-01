@@ -38,7 +38,7 @@ const groups = [
 		optionRegex: /alu|alm/i,
 	},
 	{
-		directory: 'Support_Team',
+		directory: 'Technical_Support_Team',
 		optionRegex: /sup/i,
 	},
 ] as const;
@@ -58,6 +58,14 @@ export async function checkGroups(options: CheckGroupsOptions) {
 			group.content =
 				group.content.slice(0, group.content.lastIndexOf('### Contributors')) +
 				group.content.slice(group.content.lastIndexOf('## Retired contributors'));
+		}
+		
+		if (group.directory === 'Nomination_Assessment_Team') {
+			// Remove the "Departure from the NAT" section of the "Nomination_Assessment_Team"
+			// article, because the users listed there are former members
+			group.content =
+				group.content.slice(0, group.content.lastIndexOf('## Departure from the NAT')) +
+				group.content.slice(group.content.lastIndexOf('## NAT Leadership'));
 		}
 
 		const onlineUsers: User[] = [];
