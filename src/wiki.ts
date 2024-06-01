@@ -96,7 +96,7 @@ export const groupMap = {
     'Global_Moderation_Team': [4],
     'Nomination_Assessment_Team': [7],
     'osu!_Alumni': [16],
-    'Support_Team': [22],
+    'Technical_Support_Team': [22],
 };
 
 export function loadGroup(group: string, locale: string = 'en'): string {

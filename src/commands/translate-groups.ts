@@ -156,7 +156,7 @@ const groups: Group[] = [
         return TranslateError.Structure;
       }
 
-      const tables = [4, 5].map(
+      const tables = [5, 6].map(
         (headerIndex) => enContent
           .slice(
             enHeaderMatches[headerIndex].index! + enHeaderMatches[headerIndex][0].length,
