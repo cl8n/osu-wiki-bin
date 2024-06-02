@@ -271,7 +271,7 @@ const groups: Group[] = [
     },
   },
   {
-    directory: 'Support_Team',
+    directory: 'Technical_Support_Team',
     optionRegex: /sup/i,
     translate: (content, enContent, { spLanguageReplacer }) => {
       const enTableMatch = enContent.match(/(?<=^\| :-- \| :-- \|\n)(?:\|.+\n)+/m);
