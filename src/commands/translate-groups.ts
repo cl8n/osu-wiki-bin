@@ -167,11 +167,11 @@ const groups: Group[] = [
       );
 
       return (
-        content.slice(0, headerMatches[4].index! + headerMatches[4][0].length) +
+        content.slice(0, headerMatches[5].index! + headerMatches[5][0].length) +
         tables[0] +
-        content.slice(headerMatches[5].index!, headerMatches[5].index! + headerMatches[5][0].length) +
+        content.slice(headerMatches[6].index!, headerMatches[6].index! + headerMatches[6][0].length) +
         tables[1] +
-        content.slice(headerMatches[6].index!)
+        content.slice(headerMatches[7].index!)
       );
     }
   },
