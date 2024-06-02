@@ -59,13 +59,20 @@ export async function checkGroups(options: CheckGroupsOptions) {
 				group.content.slice(0, group.content.lastIndexOf('### Contributors')) +
 				group.content.slice(group.content.lastIndexOf('## Retired contributors'));
 		}
-		
+
 		if (group.directory === 'Nomination_Assessment_Team') {
-			// Remove the "Departure from the NAT" section of the "Nomination_Assessment_Team"
-			// article, because the users listed there are former members
+			// Skip sections before "Team members", which do link to some users
+			group.content = group.content.slice(group.content.lastIndexOf('## Team members'));
+
+			// Move the "Structural" table to the front of the input so that users
+			// there register as having no playmodes. Delete everything that comes
+			// after it
+			const structuralTableStartIndex = group.content.indexOf('### Structural');
+			const structuralTableEndIndex = group.content.indexOf('|\n\n', structuralTableStartIndex) + 3;
+
 			group.content =
-				group.content.slice(0, group.content.lastIndexOf('## Departure from the NAT')) +
-				group.content.slice(group.content.lastIndexOf('## NAT Leadership'));
+				group.content.slice(structuralTableStartIndex, structuralTableEndIndex) +
+				group.content.slice(0, structuralTableStartIndex);
 		}
 
 		const onlineUsers: User[] = [];
