@@ -7,6 +7,7 @@ import { replaceCommandBuilder } from './replace.js';
 import { reviewCommandBuilder } from './review.js';
 import { sortListsCommandBuilder } from './sort-lists.js';
 import { translateGroupsCommandBuilder } from './translate-groups.js';
+import { translateTournamentCountriesCommandBuilder } from './translate-tournament-countries.js';
 
 export const commandBuilders = [
     checkGroupsCommandBuilder,
@@ -18,4 +19,5 @@ export const commandBuilders = [
     reviewCommandBuilder,
     sortListsCommandBuilder,
     translateGroupsCommandBuilder,
+    translateTournamentCountriesCommandBuilder,
 ];
