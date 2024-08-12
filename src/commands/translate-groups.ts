@@ -314,7 +314,7 @@ export function translateGroups(options: TranslateGroupsOptions) {
       continue;
     }
 
-    const groupInfoFilenameMatch = groupInfoFilename.match(/^([a-z]{2}(?:-[a-z]{2})?)\.yaml$/);
+    const groupInfoFilenameMatch = groupInfoFilename.match(/^([a-z-]{2,5})\.yaml$/);
 
     if (groupInfoFilenameMatch == null) {
       continue;
