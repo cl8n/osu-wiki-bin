@@ -8,16 +8,17 @@ function sortListsInPath(path: string) {
     const file = readFileSync(path, 'utf8');
     let lines = file.split('\n');
 
-    let currentList = [];
-    let currentListStart = null;
+    let currentList: [string, string][] = [];
+    let currentListStart: number | null = null;
+
     for (let i = 0; i < lines.length; ++i) {
         const match = lines[i].match(rowRegex);
-        if (match !== null) {
+        if (match != null) {
             if (currentListStart == null)
                 currentListStart = i;
 
-            currentList.push([match[1], match[0]]);
-        } else if (currentListStart !== null) {
+            currentList.push([match[1], lines[i]]);
+        } else if (currentListStart != null) {
             lines = lines.slice(0, currentListStart)
                 .concat(currentList
                     .sort((a, b) => a[0].localeCompare(b[0]))
