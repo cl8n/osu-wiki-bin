@@ -145,7 +145,7 @@ const groups: Group[] = [
     translate: (content, enContent, { spLanguageReplacer }) => {
       const enHeaderMatches = [...enContent.matchAll(/^###? .+/gm)];
 
-      if (enHeaderMatches.length !== 8) {
+      if (enHeaderMatches.length !== 9) {
         return TranslateError.EnStructure;
       }
 
@@ -216,13 +216,13 @@ const groups: Group[] = [
     directory: 'Nomination_Assessment_Team',
     optionRegex: /nat|nomination assess/i,
     translate: (content, enContent, { enInfo, getString, spLanguageReplacer }) => {
-      const enTableMatches = [...enContent.matchAll(/(?<=^\| :-- \| :-- \| :-- \|\n)(?:\|.+\n)+/gm)];
+      const enTableMatches = [...enContent.matchAll(/(?<=^\| :-- \| :-- \|\n)(?:\|.+\n)+/gm)];
 
-      if (enTableMatches.length !== 4) {
+      if (enTableMatches.length !== 6) {
         return TranslateError.EnStructure;
       }
 
-      const tableMatches = [...content.matchAll(/(?<=^\| :-- \| :-- \| :-- \|\n)(?:\|.+\n)+/gm)];
+      const tableMatches = [...content.matchAll(/(?<=^\| :-- \| :-- \|\n)(?:\|.+\n)+/gm)];
 
       if (tableMatches.length !== enTableMatches.length) {
         return TranslateError.Structure;
